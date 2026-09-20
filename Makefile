@@ -1,5 +1,5 @@
 # ORIGIN: AI — drafted by Claude Code, reviewed by Kiel
-.PHONY: install up down logs test lint format
+.PHONY: install up down logs test lint format smoke
 
 install:  ## create .venv (Python 3.12) and install the project + dev tools
 	python3.12 -m venv .venv
@@ -22,3 +22,6 @@ lint:
 
 format:
 	.venv/bin/ruff check --fix . && .venv/bin/ruff format .
+
+smoke:  ## prove the running stack works: /health and one packet
+	scripts/smoke.sh

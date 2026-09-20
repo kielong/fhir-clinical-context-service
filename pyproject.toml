@@ -21,6 +21,7 @@ dependencies = [
 dev = [
     "pytest>=8",
     "ruff>=0.6",
+    "respx>=0.21",  # mocks HTTP calls made through httpx
     "httpx2>=2",  # Starlette's TestClient prefers it; with plain httpx it emits a deprecation warning
 ]
 

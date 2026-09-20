@@ -10,7 +10,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from ..config import Settings
-from ..dependencies import HttpDep, SettingsDep
+from ..dependencies import FhirDep, HttpDep, SettingsDep
 
 router = APIRouter(tags=["health"])
 
@@ -24,18 +24,6 @@ class HealthResponse(BaseModel):
     hapi: Literal["ok", "down"]
     ollama_http: Literal["ok", "down"]
     ollama_model: Literal["ok", "missing", "down"]
-
-
-# ORIGIN: H-spec — Kiel's decision: any non-200 metadata response counts as "down".
-#   Lines typed by Claude Code.
-async def _probe_hapi(http: httpx.AsyncClient, settings: Settings) -> Literal["ok", "down"]:
-    try:
-        response = await http.get(
-            f"{settings.fhir_base_url}/metadata", timeout=settings.fhir_timeout_seconds
-        )
-    except httpx.HTTPError:
-        return "down"
-    return "ok" if response.status_code == 200 else "down"
 
 
 # ORIGIN: H-spec — Kiel's decision: an untagged model name matches ":latest" (Ollama's own
@@ -63,9 +51,11 @@ async def _probe_ollama(
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health(http: HttpDep, settings: SettingsDep) -> HealthResponse:
+async def health(fhir: FhirDep, http: HttpDep, settings: SettingsDep) -> HealthResponse:
     """Liveness plus dependency visibility. Always 200 while the process is up."""
-    hapi, (ollama_http, ollama_model) = await asyncio.gather(
-        _probe_hapi(http, settings), _probe_ollama(http, settings)
+    hapi_up, (ollama_http, ollama_model) = await asyncio.gather(
+        fhir.ping(), _probe_ollama(http, settings)
     )
-    return HealthResponse(hapi=hapi, ollama_http=ollama_http, ollama_model=ollama_model)
+    return HealthResponse(
+        hapi="ok" if hapi_up else "down", ollama_http=ollama_http, ollama_model=ollama_model
+    )

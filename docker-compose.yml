@@ -41,6 +41,14 @@ services:
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
       # The largest Synthea bundle is ~42 MB (18,488 entries); give the JVM an explicit heap.
       JAVA_TOOL_OPTIONS: ${HAPI_JAVA_OPTS:--Xmx2g}
+      # ORIGIN: H-spec — Kiel's decision: no patient identifier is printed to any log, so HAPI's
+      #   access log (which prints every search parameter, including a patient's identifier) and
+      #   its "resource not found" warning (which names the id; it fires on every lookup by
+      #   identifier, because we try the id first) are silenced. Lines typed by Claude Code.
+      LOGGING_LEVEL_FHIRTEST_ACCESS: WARN
+      # Spring lowercases environment variable names, so a class name with capitals cannot be
+      # targeted; the (lowercase) package is set instead.
+      LOGGING_LEVEL_CA_UHN_FHIR_REST_SERVER_INTERCEPTOR: ERROR
       # hapi.fhir.server_address is deliberately NOT set: paging links derive from the request.
     healthcheck:
       # ORIGIN: H-spec — Kiel's decision: no curl-based check on the distroless image; use its

@@ -1,0 +1,23 @@
+# ORIGIN: AI — workflow typed by Claude Code, reviewed by Kiel.
+# Lint and test on every push and pull request. No Docker, HAPI, or model is needed: the tests
+# fake the FHIR server and Ollama.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e '.[dev]'
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
