@@ -18,10 +18,10 @@ from fastapi.testclient import TestClient
 import synthetic as syn
 from clinical_context.config import Settings, get_settings
 from clinical_context.dependencies import get_fhir_client, get_summarizer
+from clinical_context.llm.summarizer import SummaryResult
 from clinical_context.main import app
 from clinical_context.models import ClinicalContextPacket, SummaryBlock
 from clinical_context.privacy import patient_hash
-from clinical_context.summarizer import SummaryResult
 from fhir_mocks import BASE, bundle, operation_outcome
 from ollama_mocks import CHAT, GOOD, OLLAMA, reply
 
@@ -48,7 +48,7 @@ def _settings(**overrides) -> Settings:
 async def _no_model(packet):
     """A summarizer that never calls a model, so a test can be about the endpoint alone."""
     block = SummaryBlock(text=None, status="unavailable", model=None, reason=None)
-    return SummaryResult(block=block, timings=None, elapsed_ms=None, attempts=0)
+    return SummaryResult(block=block, elapsed_ms=None, attempts=0)
 
 
 @pytest.fixture
@@ -152,7 +152,7 @@ def test_the_summary_comes_from_the_summarizer_and_never_changes_the_facts(hapi,
         block = SummaryBlock(
             text="Two plain sentences.", status="generated", model="m", reason=None
         )
-        return SummaryResult(block=block, timings=None, elapsed_ms=7, attempts=1)
+        return SummaryResult(block=block, elapsed_ms=7, attempts=1)
 
     app.dependency_overrides[get_summarizer] = lambda: fake
     body = client.get(PACKET.format(SYNTHEA_UUID)).json()

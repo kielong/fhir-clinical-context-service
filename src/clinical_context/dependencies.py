@@ -14,8 +14,8 @@ from fastapi import Depends, Request
 
 from .config import Settings, get_settings
 from .fhir_client import FhirClient
+from .llm import SummaryCache, SummaryResult, summarize
 from .models import ClinicalContextPacket
-from .summarizer import SummaryCache, SummaryResult, summarize
 
 
 def get_http(request: Request) -> httpx.AsyncClient:

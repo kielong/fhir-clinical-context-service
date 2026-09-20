@@ -15,9 +15,9 @@ from fastapi import Path as PathParam
 from ..assembly import assemble_packet
 from ..config import Settings
 from ..dependencies import FhirDep, SettingsDep, SummarizerDep
+from ..llm import SummaryResult
 from ..models import ClinicalContextPacket, SummaryBlock, Timings
 from ..privacy import error_location, patient_hash
-from ..summarizer import SummaryResult
 
 router = APIRouter(prefix="/v1", tags=["clinical context"])
 logger = logging.getLogger("clinical_context.request")
@@ -101,7 +101,7 @@ async def _summary_or_unavailable(
         block = SummaryBlock(
             text=None, status="unavailable", model=settings.ollama_model, reason="internal_error"
         )
-        return SummaryResult(block=block, timings=None, elapsed_ms=None, attempts=0)
+        return SummaryResult(block=block, elapsed_ms=None, attempts=0)
 
 
 @router.get("/patients/{patient_id}/clinical-context", response_model=ClinicalContextPacket)

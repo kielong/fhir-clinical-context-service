@@ -16,9 +16,9 @@ from fastapi.responses import JSONResponse
 
 from .config import get_settings
 from .fhir_client import AmbiguousPatient, FhirUnavailable, PatientNotFound
+from .llm import SummaryCache, warm_up
 from .privacy import RedactPatientIds, error_location, patient_hash
 from .routers import health, packet
-from .summarizer import SummaryCache, warm_up
 
 logger = logging.getLogger("clinical_context.request")
 
@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
     settings = app.dependency_overrides.get(get_settings, get_settings)()
     async with httpx.AsyncClient() as client:
         app.state.http = client
-        app.state.summary_cache = SummaryCache(settings.summary_cache_size)
+        cache = app.state.summary_cache = SummaryCache(settings.summary_cache_size)
         # Load the model in the background so the first reviewer does not pay for it. It never
         # delays startup and never stops the service from starting.
         warmup = asyncio.create_task(warm_up(client, settings)) if settings.ollama_warmup else None
@@ -63,6 +63,9 @@ async def lifespan(app: FastAPI):
                 warmup.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await warmup
+            # Summaries still being written belong to the cache, not to a request: stop them here,
+            # before the HTTP client they use is closed.
+            await cache.close()
 
 
 app = FastAPI(title="Clinical Context Packet Service", lifespan=lifespan)

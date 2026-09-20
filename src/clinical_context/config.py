@@ -28,7 +28,10 @@ class Settings(BaseSettings):
     # Ollama
     ollama_host: str = "http://ollama:11434"
     ollama_model: str = "llama3.2:3b"
-    ollama_timeout_seconds: float = 120  # the whole summarizer call, retry included
+    ollama_timeout_seconds: float = (
+        120  # one generation, retry included; starts when the model is free
+    )
+    summary_deadline_seconds: float = 45  # how long a request waits for a summary, queue included
     ollama_num_ctx: int = 4096
     ollama_num_predict: int = 160
     ollama_keep_alive: str = "30m"
