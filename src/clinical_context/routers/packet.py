@@ -15,8 +15,9 @@ from fastapi import Path as PathParam
 from ..assembly import assemble_packet
 from ..config import Settings
 from ..dependencies import FhirDep, SettingsDep, SummarizerDep
-from ..models import ClinicalContextPacket, Timings
-from ..privacy import patient_hash
+from ..models import ClinicalContextPacket, SummaryBlock, Timings
+from ..privacy import error_location, patient_hash
+from ..summarizer import SummaryResult
 
 router = APIRouter(prefix="/v1", tags=["clinical context"])
 logger = logging.getLogger("clinical_context.request")
@@ -43,12 +44,14 @@ def _milliseconds_since(started: float) -> int:
     return int((time.perf_counter() - started) * 1000)
 
 
-def _log_request(patient_id: str, packet: ClinicalContextPacket, fhir_ms: int, total_ms: int):
+def _log_request(
+    patient_id: str, packet: ClinicalContextPacket, fhir_ms: int, llm_ms: int | None, total_ms: int
+):
     """One line per request: counts and timings only. Never a name, a fact, or an id."""
     meta = packet.meta
     logger.info(
         "packet patient=%s conditions=%d medications=%d allergies=%d "
-        "excluded=%d/%d/%d invalid=%d/%d/%d truncated=%s fhir_ms=%d total_ms=%d "
+        "excluded=%d/%d/%d invalid=%d/%d/%d truncated=%s fhir_ms=%d llm_ms=%s total_ms=%d "
         "summary=%s reason=%s",
         patient_hash(patient_id),
         len(packet.conditions),
@@ -62,6 +65,7 @@ def _log_request(patient_id: str, packet: ClinicalContextPacket, fhir_ms: int, t
         meta.invalid_counts.allergies,
         meta.truncated,
         fhir_ms,
+        llm_ms,
         total_ms,
         packet.summary.status,
         packet.summary.reason,
@@ -83,6 +87,21 @@ async def _fetch_lists(fhir: FhirDep, fhir_id: str) -> tuple[list[dict], list[di
             raise result
     conditions, medications, allergies = results
     return conditions, medications, allergies
+
+
+# ORIGIN: H-spec — Kiel's decision: if the summarizer fails in any way, including a bug in it, the
+#   reviewer still gets every fact; only the summary is unavailable. Lines typed by Claude Code.
+async def _summary_or_unavailable(
+    summarize: SummarizerDep, packet: ClinicalContextPacket, settings: Settings
+) -> SummaryResult:
+    try:
+        return await summarize(packet)
+    except Exception as error:  # deliberately broad: the facts must survive anything
+        logger.error("summarizer crashed: %s at %s", type(error).__name__, error_location(error))
+        block = SummaryBlock(
+            text=None, status="unavailable", model=settings.ollama_model, reason="internal_error"
+        )
+        return SummaryResult(block=block, timings=None, elapsed_ms=None, attempts=0)
 
 
 @router.get("/patients/{patient_id}/clinical-context", response_model=ClinicalContextPacket)
@@ -112,15 +131,15 @@ async def clinical_context(
     )
 
     # The summary is the only thing a model may add. Facts, gaps and meta stay exactly as assembled.
-    summary = await summarize(packet)
+    result = await _summary_or_unavailable(summarize, packet, settings)
     total_ms = _milliseconds_since(started)
     packet = packet.model_copy(
         update={
-            "summary": summary,
+            "summary": result.block,
             "meta": packet.meta.model_copy(
-                update={"timings_ms": Timings(fhir=fhir_ms, llm=None, total=total_ms)}
+                update={"timings_ms": Timings(fhir=fhir_ms, llm=result.elapsed_ms, total=total_ms)}
             ),
         }
     )
-    _log_request(patient_id, packet, fhir_ms, total_ms)
+    _log_request(patient_id, packet, fhir_ms, result.elapsed_ms, total_ms)
     return packet

@@ -4,8 +4,9 @@
 #   layout. The error contract itself is labeled H-spec below.
 """FastAPI app entry point: `uvicorn clinical_context.main:app`."""
 
+import asyncio
+import contextlib
 import logging
-import traceback
 from contextlib import asynccontextmanager
 
 import httpx
@@ -13,9 +14,11 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from .config import get_settings
 from .fhir_client import AmbiguousPatient, FhirUnavailable, PatientNotFound
-from .privacy import RedactPatientIds, patient_hash
+from .privacy import RedactPatientIds, error_location, patient_hash
 from .routers import health, packet
+from .summarizer import SummaryCache, warm_up
 
 logger = logging.getLogger("clinical_context.request")
 
@@ -46,9 +49,20 @@ _configure_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # One shared async client for the life of the process: nothing blocks the event loop.
+    settings = app.dependency_overrides.get(get_settings, get_settings)()
     async with httpx.AsyncClient() as client:
         app.state.http = client
-        yield
+        app.state.summary_cache = SummaryCache(settings.summary_cache_size)
+        # Load the model in the background so the first reviewer does not pay for it. It never
+        # delays startup and never stops the service from starting.
+        warmup = asyncio.create_task(warm_up(client, settings)) if settings.ollama_warmup else None
+        try:
+            yield
+        finally:
+            if warmup is not None:
+                warmup.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await warmup
 
 
 app = FastAPI(title="Clinical Context Packet Service", lifespan=lifespan)
@@ -110,12 +124,10 @@ async def _catch_unexpected_errors(request: Request, call_next):
     try:
         return await call_next(request)
     except Exception as error:
-        last = traceback.extract_tb(error.__traceback__)[-1]
         logger.error(
-            "unexpected %s at %s:%s patient=%s",
+            "unexpected %s at %s patient=%s",
             type(error).__name__,
-            last.filename.rsplit("/", 1)[-1],
-            last.lineno,
+            error_location(error),
             _who(request),
         )
         return JSONResponse({"detail": "Internal server error"}, status_code=500)

@@ -8,6 +8,7 @@ import hmac
 import logging
 import re
 import secrets
+import traceback
 
 # The key exists only in this process's memory. A plain sha256 of an id can be reversed by hashing
 # every likely id (a HAPI id like 1000, an SSN typed by mistake); a keyed hash cannot. The price is
@@ -41,3 +42,9 @@ class RedactPatientIds(logging.Filter):
         if isinstance(record.args, tuple):
             record.args = tuple(_redact(a) if isinstance(a, str) else a for a in record.args)
         return True
+
+
+def error_location(error: BaseException) -> str:
+    """`file.py:123`, where an error was raised. Never its message, which can hold patient data."""
+    last = traceback.extract_tb(error.__traceback__)[-1]
+    return f"{last.filename.rsplit('/', 1)[-1]}:{last.lineno}"

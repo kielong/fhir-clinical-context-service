@@ -58,11 +58,18 @@ class AllergyFact(_Strict):
     source: str
 
 
+# Why a summary is unavailable. `internal_error` means our own code failed while writing it (a bug,
+# not the model); the facts are still returned.
+SummaryReason = Literal[
+    "model_unreachable", "timeout", "invalid_output", "policy_violation", "internal_error"
+]
+
+
 class SummaryBlock(_Strict):
     text: str | None
     status: Literal["generated", "unavailable"]
     model: str | None
-    reason: Literal["model_unreachable", "timeout", "invalid_output", "policy_violation"] | None
+    reason: SummaryReason | None
 
 
 class MissingItem(_Strict):

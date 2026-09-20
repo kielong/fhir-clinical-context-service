@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     ollama_num_predict: int = 160
     ollama_keep_alive: str = "30m"
     ollama_warmup: bool = True
+    summary_cache_size: int = 256  # finished summaries remembered in memory; 0 turns it off
 
     # Seed
     seed_data_dir: str = "data/synthea/fhir"

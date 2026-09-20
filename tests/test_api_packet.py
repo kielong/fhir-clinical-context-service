@@ -17,11 +17,13 @@ from fastapi.testclient import TestClient
 
 import synthetic as syn
 from clinical_context.config import Settings, get_settings
-from clinical_context.dependencies import get_summarizer
+from clinical_context.dependencies import get_fhir_client, get_summarizer
 from clinical_context.main import app
 from clinical_context.models import ClinicalContextPacket, SummaryBlock
 from clinical_context.privacy import patient_hash
+from clinical_context.summarizer import SummaryResult
 from fhir_mocks import BASE, bundle, operation_outcome
+from ollama_mocks import CHAT, GOOD, OLLAMA, reply
 
 FIXTURES = Path(__file__).parent / "fixtures" / "real"
 SYNTHEA_UUID = "2fa15bc7-8866-461a-9000-f739e425860a"  # the assignment's example patient
@@ -35,18 +37,35 @@ def _settings(**overrides) -> Settings:
         "fhir_max_pages": 5,
         "fhir_timeout_seconds": 5,
         "as_of_date": date(2019, 9, 16),
+        "ollama_host": OLLAMA,
+        "ollama_model": "llama3.2:3b",
+        "ollama_timeout_seconds": 5,
+        "ollama_warmup": False,
     }
     return Settings(_env_file=None, **{**defaults, **overrides})
 
 
+async def _no_model(packet):
+    """A summarizer that never calls a model, so a test can be about the endpoint alone."""
+    block = SummaryBlock(text=None, status="unavailable", model=None, reason=None)
+    return SummaryResult(block=block, timings=None, elapsed_ms=None, attempts=0)
+
+
 @pytest.fixture
 def api(hapi):
-    """A factory for a running app with a fake HAPI behind it: `client = api(as_of_date=None)`."""
+    """A factory for a running app with a fake HAPI behind it: `client = api(as_of_date=None)`.
+
+    The model is skipped unless the test asks for it with `api(model=True)` (and then fakes Ollama).
+    """
     started: list[TestClient] = []
 
-    def build(**settings_overrides) -> TestClient:
+    def build(*, model: bool = False, **settings_overrides) -> TestClient:
         settings = _settings(**settings_overrides)
         app.dependency_overrides[get_settings] = lambda: settings
+        if model:
+            app.dependency_overrides.pop(get_summarizer, None)  # use the real summarizer
+        else:
+            app.dependency_overrides[get_summarizer] = lambda: _no_model
         client = TestClient(app, raise_server_exceptions=False)
         client.__enter__()  # runs the app lifespan, which creates the shared HTTP client
         started.append(client)
@@ -130,7 +149,10 @@ def test_the_summary_comes_from_the_summarizer_and_never_changes_the_facts(hapi,
     baseline = client.get(PACKET.format(SYNTHEA_UUID)).json()
 
     async def fake(packet):
-        return SummaryBlock(text="Two plain sentences.", status="generated", model="m", reason=None)
+        block = SummaryBlock(
+            text="Two plain sentences.", status="generated", model="m", reason=None
+        )
+        return SummaryResult(block=block, timings=None, elapsed_ms=7, attempts=1)
 
     app.dependency_overrides[get_summarizer] = lambda: fake
     body = client.get(PACKET.format(SYNTHEA_UUID)).json()
@@ -200,6 +222,98 @@ def test_the_three_lists_are_searched_by_patient_with_no_filter_and_never_everyt
     }
     assert all(dict(r.url.params) == {"patient": "1000", "_count": "100"} for r in list_calls)
     assert not any("$everything" in str(c.request.url) for c in hapi.calls)
+
+
+# ============================================================ with the model (Ollama faked)
+
+
+def _facts(body: dict) -> dict:
+    return {k: v for k, v in body.items() if k not in ("summary", "meta")}
+
+
+def test_a_generated_summary_is_added_and_the_facts_are_unchanged(hapi, api):
+    _mount_aaron_by_identifier(hapi)
+    baseline = api().get(PACKET.format(SYNTHEA_UUID)).json()
+    hapi.post(CHAT).respond(200, json=reply())
+
+    body = api(model=True).get(PACKET.format(SYNTHEA_UUID)).json()
+
+    assert body["summary"] == {
+        "text": GOOD,
+        "status": "generated",
+        "model": "llama3.2:3b",
+        "reason": None,
+    }
+    assert _facts(body) == _facts(baseline)  # the model only ever adds the summary
+    assert isinstance(body["meta"]["timings_ms"]["llm"], int)
+
+
+def test_when_ollama_is_down_the_facts_still_come_back_with_an_unavailable_summary(hapi, api):
+    _mount_aaron_by_identifier(hapi)
+    baseline = api().get(PACKET.format(SYNTHEA_UUID)).json()
+    hapi.post(CHAT).mock(side_effect=httpx.ConnectError("refused"))
+
+    response = api(model=True).get(PACKET.format(SYNTHEA_UUID))
+
+    assert response.status_code == 200  # failing closed on prose, not on evidence
+    body = response.json()
+    assert body["summary"] == {
+        "text": None,
+        "status": "unavailable",
+        "model": "llama3.2:3b",
+        "reason": "model_unreachable",
+    }
+    assert _facts(body) == _facts(baseline)
+
+
+def test_a_model_that_breaks_the_rules_never_reaches_the_reviewer(hapi, api):
+    _mount_aaron_by_identifier(hapi)
+    hapi.post(CHAT).respond(200, json=reply("Approval is recommended. Coverage is warranted."))
+
+    response = api(model=True).get(PACKET.format(SYNTHEA_UUID))
+
+    assert response.status_code == 200
+    assert response.json()["summary"]["reason"] == "policy_violation"
+    assert "Approval" not in response.text and "recommended" not in response.text
+
+
+def test_asking_again_gives_the_same_words_even_if_the_model_would_say_it_differently(hapi, api):
+    _mount_aaron_by_identifier(hapi)
+    route = hapi.post(CHAT)
+    route.side_effect = [
+        httpx.Response(200, json=reply("First wording of the summary.")),
+        httpx.Response(200, json=reply("A different wording of the summary.")),
+    ]
+    client = api(model=True)
+
+    first = client.get(PACKET.format(SYNTHEA_UUID)).json()
+    second = client.get(PACKET.format(SYNTHEA_UUID)).json()
+
+    assert first["summary"]["text"] == second["summary"]["text"] == "First wording of the summary."
+    assert route.call_count == 1
+
+
+def test_a_summarizer_that_crashes_still_returns_the_facts(hapi, api, caplog):
+    _mount_aaron_by_identifier(hapi)
+    caplog.set_level(logging.INFO, logger="clinical_context")
+    client = api()
+    baseline = client.get(PACKET.format(SYNTHEA_UUID)).json()
+
+    async def explode(packet):
+        raise RuntimeError("Aaron697 Brekke496 has Prediabetes")
+
+    app.dependency_overrides[get_summarizer] = lambda: explode
+    response = client.get(PACKET.format(SYNTHEA_UUID))
+
+    assert response.status_code == 200  # a bug in the writer must never cost the reviewer the facts
+    body = response.json()
+    assert body["summary"]["status"] == "unavailable"
+    assert body["summary"]["reason"] == "internal_error"
+    assert _facts(body) == _facts(baseline)
+    logged = " ".join(
+        r.getMessage() for r in caplog.records if r.name.startswith("clinical_context")
+    )
+    assert "RuntimeError" in logged and "Aaron" not in logged and "Prediabetes" not in logged
 
 
 # ============================================================ the error contract
@@ -300,10 +414,11 @@ def test_an_unexpected_crash_is_a_generic_500_with_no_stack_and_no_data(hapi, ap
     caplog.set_level(logging.INFO, logger="clinical_context")
     client = api()
 
-    async def explode(packet):
-        raise RuntimeError("Aaron697 Brekke496 has Prediabetes 2fa15bc7")
+    class Exploding:
+        async def resolve_patient(self, patient_id):
+            raise RuntimeError("Aaron697 Brekke496 has Prediabetes 2fa15bc7")
 
-    app.dependency_overrides[get_summarizer] = lambda: explode
+    app.dependency_overrides[get_fhir_client] = lambda: Exploding()
     response = client.get(PACKET.format(SYNTHEA_UUID))
 
     assert response.status_code == 500

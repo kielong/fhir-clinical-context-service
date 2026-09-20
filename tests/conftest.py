@@ -18,3 +18,10 @@ def hapi():
     """
     with respx.mock(assert_all_mocked=True, assert_all_called=False) as router:
         yield router
+
+
+@pytest.fixture
+def ollama(hapi):
+    """The same fake network as `hapi`: one router fakes every server, so a test registers its
+    Ollama routes on it too. (Named separately so a test reads as being about the model.)"""
+    return hapi
