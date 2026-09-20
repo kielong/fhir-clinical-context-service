@@ -1,0 +1,14 @@
+# ORIGIN: H-spec — the choice of these ten is Kiel's decision (see eval/ten_patients.md); the
+#   list was typed by Claude Code.
+# The ten patients read by hand. Same format as scripts/seed_priority.txt (one Synthea UUID per line).
+# Run:  python scripts/eval_ten.py --file eval/ten_patients.txt
+2fa15bc7-8866-461a-9000-f739e425860a  # Aaron697 Brekke496
+0979f4fe-08c5-414e-ba1c-6ccf852bcce4  # Floyd420 Jerde200
+9da0dcfc-05e3-4e8e-95ff-b04b56f748be  # Shelly431 Corwin846
+5919de03-6363-41a7-b251-f5be75149adc  # Jose871 Williamson769
+e2129449-9c68-4155-a826-e22091aa4742  # Alicia629 Walter473
+f7f63ca8-d282-4520-9a68-3177e2a5db6f  # Andreas188 Dare640
+9dc305b0-c821-49f3-817c-58e853bce8b1  # Beatriz277 Salas880
+9e2653fc-49e0-4b2e-86f8-e664bbe07be3  # Adam631 Shields502
+20123c13-40e7-4134-8a18-58c57be98c74  # Alan320 Wiza601
+2c57a897-8381-44a6-920f-e074fa6f74cf  # Lorenzo669 Cuellar188
