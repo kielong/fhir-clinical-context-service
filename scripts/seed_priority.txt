@@ -1,0 +1,13 @@
+# Synthea patients that load first, and that tests, evaluation and demos are built around.
+# Earlier lines load first. One UUID per line (the UUID in the bundle's filename); anything after
+# a # is ignored. Change this list to change who is guaranteed to be in HAPI.
+2fa15bc7-8866-461a-9000-f739e425860a  # Aaron697 Brekke496: the example patient; a 1965 cardiac arrest still marked active; no active meds
+0979f4fe-08c5-414e-ba1c-6ccf852bcce4  # Floyd420 Jerde200: 1,275 medication requests in a 42 MB bundle; deceased, meds still active
+9da0dcfc-05e3-4e8e-95ff-b04b56f748be  # Shelly431 Corwin846: 24 active conditions (the busiest chart)
+5919de03-6363-41a7-b251-f5be75149adc  # Jose871 Williamson769: 14 active meds; deceased
+e2129449-9c68-4155-a826-e22091aa4742  # Alicia629 Walter473: a child with an empty chart
+f7f63ca8-d282-4520-9a68-3177e2a5db6f  # Andreas188 Dare640: five active allergies and one inactive
+9dc305b0-c821-49f3-817c-58e853bce8b1  # Beatriz277 Salas880: the most allergies (6 active, 4 inactive)
+9e2653fc-49e0-4b2e-86f8-e664bbe07be3  # Adam631 Shields502: deceased at 14, seven allergies
+20123c13-40e7-4134-8a18-58c57be98c74  # Alan320 Wiza601: a young child, nearly empty chart
+2c57a897-8381-44a6-920f-e074fa6f74cf  # Lorenzo669 Cuellar188: 192 medication requests; "finding"/"situation" conditions marked active

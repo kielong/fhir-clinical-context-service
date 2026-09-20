@@ -29,7 +29,7 @@ packages = ["src/clinical_context"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "scripts"]  # scripts/ holds the seed helpers the tests import
 filterwarnings = [
     # Third-party: starlette 1.6's TestClient still uses a deprecated anyio alias.
     "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
