@@ -1,0 +1,116 @@
+# ORIGIN: AI — YAML typed by Claude Code, reviewed by Kiel. The decision-heavy blocks are marked
+#   H-spec below: the decisions are Kiel's, the lines are Claude Code's.
+# ORIGIN: OSS — the HAPI-on-Postgres environment variables follow the hapi-fhir-jpaserver-starter
+#   README (https://github.com/hapifhir/hapi-fhir-jpaserver-starter, Apache-2.0).
+name: clinical-context
+
+services:
+  postgres:
+    image: postgres:16.15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hapi}
+      POSTGRES_USER: ${POSTGRES_USER:-hapi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hapi}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Not published: only HAPI talks to Postgres.
+
+  hapi:
+    # Default tag is distroless (no shell, no curl); it ships a Java health class instead.
+    image: hapiproject/hapi:v8.12.0-1
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # ORIGIN: H-spec — Kiel's decisions: HAPI runs on Postgres (not in-memory H2) so the 1,180
+      #   bundles survive a reboot; explicit JVM heap; hapi.fhir.server_address left unset.
+      # Without these, HAPI silently uses in-memory H2 and loses everything on restart.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-hapi}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-hapi}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-hapi}
+      SPRING_DATASOURCE_DRIVERCLASSNAME: org.postgresql.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+      # The largest Synthea bundle is ~42 MB (18,488 entries); give the JVM an explicit heap.
+      JAVA_TOOL_OPTIONS: ${HAPI_JAVA_OPTS:--Xmx2g}
+      # hapi.fhir.server_address is deliberately NOT set: paging links derive from the request.
+    healthcheck:
+      # ORIGIN: H-spec — Kiel's decision: no curl-based check on the distroless image; use its
+      #   Java HealthCheck class (verified to work in this tag) and gate the API on it.
+      test: ["CMD", "java", "-cp", "/app", "HealthCheck"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
+  ollama:
+    image: ollama/ollama:0.34.2
+    restart: unless-stopped
+    ports:
+      # ORIGIN: H-spec — Kiel's decision: Ollama is bound to localhost only, so it is never
+      #   reachable from outside the host, on Azure too.
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # One-shot: pulls OLLAMA_MODEL into the ollama volume, then exits.
+  ollama-init:
+    image: ollama/ollama:0.34.2
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ['ollama pull "$$OLLAMA_MODEL"']
+
+  api:
+    build: .
+    restart: unless-stopped
+    # ORIGIN: H-spec — Kiel's decision: the API is fail-open without Ollama, so it does not
+    #   depend on it.
+    # Deliberately no depends_on for ollama: the API is fail-open without it, and this lets
+    # `docker compose up --scale ollama=0 --scale ollama-init=0` use a native Ollama.
+    depends_on:
+      hapi:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Container-network values win over anything in .env (which holds host-side values).
+      FHIR_BASE_URL: http://hapi:8080/fhir
+      OLLAMA_HOST: ${API_OLLAMA_HOST:-http://ollama:11434}
+    healthcheck:
+      # Liveness only: /health returns 200 whenever the process is up.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  pg_data:
+  ollama_data:

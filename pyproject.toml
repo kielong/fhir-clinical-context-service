@@ -1,0 +1,44 @@
+# ORIGIN: AI — drafted by Claude Code, reviewed by Kiel
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clinical-context-service"
+version = "0.1.0"
+description = "Assembles a sourced clinical-context packet from a FHIR server; a local LLM writes only the summary."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    "httpx2>=2",  # Starlette's TestClient prefers it; with plain httpx it emits a deprecation warning
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/clinical_context"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+filterwarnings = [
+    # Third-party: starlette 1.6's TestClient still uses a deprecated anyio alias.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
