@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # Ollama
     ollama_host: str = "http://ollama:11434"
-    ollama_model: str = "llama3.2:3b"
+    ollama_model: str = "gemma3:4b"  # chosen by the bake-off, see eval/ten_patients.md
     ollama_timeout_seconds: float = (
         120  # one generation, retry included; starts when the model is free
     )

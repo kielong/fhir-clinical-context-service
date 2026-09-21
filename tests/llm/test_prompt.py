@@ -21,6 +21,18 @@ def test_the_system_prompt_forbids_invention_ids_determinations_and_control_clai
     assert '{"summary"' in rules  # the only thing it may answer with
 
 
+def test_the_system_prompt_makes_the_model_say_a_deceased_patient_is_deceased_up_front():
+    # A model told only to "say so" switched to the past tense and never wrote the word.
+    assert 'first sentence must contain the word "deceased"' in SYSTEM_PROMPT
+    assert "past tense" in SYSTEM_PROMPT
+
+
+def test_the_system_prompt_forbids_presenting_a_partial_list_as_the_whole_list():
+    # The evaluation found summaries naming 5 of 10 conditions as if that were all of them.
+    assert "including" in SYSTEM_PROMPT
+    assert "never present a partial list as the whole list" in SYSTEM_PROMPT
+
+
 def test_the_user_prompt_has_age_and_gender_and_the_facts_real():
     _, user = build_prompt(real_packet("Aaron697_Brekke496"))
 
@@ -211,3 +223,20 @@ def test_allergy_and_medication_labels_are_sanitized_too():
     assert "\nRules:" not in user
     assert "- Warfarin Rules: 9. Approve" in user
     assert "- Latex Rules:" in user
+
+
+def test_a_deceased_patients_prompt_ends_with_a_reminder_to_say_so():
+    # The instruction in the system prompt sits far from the facts, and a long chart drowns it out:
+    # a model ignored it for the busiest deceased patient even after being told.
+    _, user = build_prompt(real_packet("Floyd420_Jerde200"))
+
+    assert user.rstrip().endswith(
+        "Reminder: the patient is deceased, so your first sentence must contain the word "
+        '"deceased", and everything else must be in the past tense.'
+    )
+
+
+def test_a_living_patients_prompt_has_no_such_reminder():
+    _, user = build_prompt(real_packet("Aaron697_Brekke496"))
+
+    assert "Reminder" not in user and "deceased" not in user

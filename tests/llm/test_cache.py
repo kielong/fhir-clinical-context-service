@@ -69,7 +69,7 @@ async def test_a_different_packet_is_summarized_separately(ollama):
     cache = SummaryCache(8)
 
     await run(real_packet("Aaron697_Brekke496"), cache=cache)
-    await run(real_packet("Jose871_Williamson769"), cache=cache)
+    await run(real_packet("Shelly431_Corwin846"), cache=cache)
 
     assert route.call_count == 2
 
@@ -134,7 +134,7 @@ async def test_the_oldest_summary_is_forgotten_first_when_the_cache_is_full(olla
     route = ollama.post(CHAT).respond(200, json=reply(NEUTRAL))
     cache = SummaryCache(2)
     a, b, c = (
-        real_packet(n) for n in ("Aaron697_Brekke496", "Jose871_Williamson769", "Alan320_Wiza601")
+        real_packet(n) for n in ("Aaron697_Brekke496", "Shelly431_Corwin846", "Alan320_Wiza601")
     )
 
     await run(a, cache=cache)
@@ -191,7 +191,7 @@ async def test_the_model_is_asked_for_one_summary_at_a_time(ollama):
 
     ollama.post(CHAT).mock(side_effect=tracked)
     cache = SummaryCache(8)
-    names = ("Aaron697_Brekke496", "Jose871_Williamson769", "Alan320_Wiza601")
+    names = ("Aaron697_Brekke496", "Shelly431_Corwin846", "Alan320_Wiza601")
 
     await asyncio.gather(*(run(real_packet(n), cache=cache) for n in names))
 

@@ -29,8 +29,12 @@ or that the patient is eligible for anything.
 5. Never say a condition is controlled, stable, improving, or worsening, and never predict an \
 outcome.
 6. Statuses are what the record says. Write "recorded as active", never "currently has".
-7. If the patient is deceased, say so, and never describe them as currently on treatment.
+7. If the patient is deceased, your first sentence must contain the word "deceased" (for example \
+"A 93-year-old man, now deceased, had ..."), and everything else must be in the past tense. Never \
+describe a deceased patient as currently on treatment.
 8. If a list says none, you may say none is recorded. Never say more than the lists say.
+9. If a list has more items than you can name in two sentences, name only the first few and say \
+"including"; never present a partial list as the whole list.
 
 Answer only with JSON of the form {"summary": "<the two sentences>"}."""
 
@@ -88,6 +92,15 @@ _NONE_ACTIVE = {
     "medications": "No active or on-hold medications are recorded",
     "allergies": "No active allergies are recorded",
 }
+
+
+# ORIGIN: AI — added by Claude Code after the ten-patient evaluation: the rule in the system prompt
+#   sits far from the facts, and on a long chart a 4B model ignored it even when told again. The
+#   last thing a small model reads is what it follows, so the reminder goes at the end.
+_DECEASED_REMINDER = (
+    'Reminder: the patient is deceased, so your first sentence must contain the word "deceased", '
+    "and everything else must be in the past tense."
+)
 
 
 def _patient_line(packet: ClinicalContextPacket) -> str:
@@ -153,6 +166,8 @@ def build_prompt(packet: ClinicalContextPacket) -> tuple[str, str]:
     gaps = _gap_lines(packet)
     if gaps:
         lines += ["Gaps in the record:", *gaps]
+    if packet.patient.deceased:
+        lines.append(_DECEASED_REMINDER)
     return SYSTEM_PROMPT, "\n".join(lines)
 
 

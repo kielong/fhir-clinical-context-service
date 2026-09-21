@@ -47,7 +47,7 @@ async def test_the_request_asks_for_greedy_decoding_a_fixed_seed_and_only_a_summ
 
 async def test_the_same_packet_sends_byte_identical_requests(ollama):
     route = ollama.post(CHAT).respond(200, json=reply(NEUTRAL))
-    packet = real_packet("Jose871_Williamson769")
+    packet = real_packet("Shelly431_Corwin846")
 
     await run(packet)
     await run(packet)

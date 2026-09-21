@@ -70,7 +70,7 @@ async def until(condition, seconds: float = 2) -> None:
 
 
 AARON = "Aaron697_Brekke496"
-JOSE = "Jose871_Williamson769"
+JOSE = "Shelly431_Corwin846"
 
 
 def test_a_request_waits_forty_five_seconds_for_a_summary_unless_told_otherwise():

@@ -28,6 +28,8 @@ class Violation(StrEnum):
     CONTROL_CLAIM = "control_claim"
     CONTRADICTS_FACTS = "contradicts_facts"
     UNSUPPORTED_NUMBER = "unsupported_number"
+    DECEASED_NOT_STATED = "deceased_not_stated"
+    DECEASED_PRESENT_TENSE = "deceased_present_tense"
 
 
 # What the retry prompt tells the model it did wrong.
@@ -50,6 +52,14 @@ REJECTION_REASONS = {
     Violation.UNSUPPORTED_NUMBER: (
         "it used a number or date that is not in the listed facts; use only numbers that appear "
         "in them"
+    ),
+    Violation.DECEASED_NOT_STATED: (
+        "it did not say the patient is deceased; the patient is deceased, so the first sentence "
+        'must contain the word "deceased"'
+    ),
+    Violation.DECEASED_PRESENT_TENSE: (
+        "it described a deceased patient as currently on treatment; use the past tense for "
+        "conditions and medications"
     ),
 }
 
@@ -175,10 +185,34 @@ def unsupported_numbers(
     return None
 
 
+# ORIGIN: AI — added by Claude Code after the ten-patient evaluation: three of the four deceased
+#   patients were summarized without ever saying they had died (one as "is taking medications"),
+#   although the prompt asks for it. A model cannot be trusted to follow that, so it is checked.
+#   For a deceased patient the summary must say so, and must not say they are currently on
+#   treatment. A living patient is held to neither rule.
+_SAYS_DECEASED = re.compile(r"\b(?:deceased|died|dead|death|passed\s+away)\b", re.IGNORECASE)
+_CURRENT_TREATMENT = re.compile(
+    r"\b(?:is|are)\s+(?:currently\s+|now\s+)?(?:taking|being\s+treated|receiving|prescribed)\b"
+    r"|\bcurrently\s+(?:has|have|takes|taking|on|receiving)\b",
+    re.IGNORECASE,
+)
+
+
+def deceased_violation(text: str, packet: ClinicalContextPacket) -> Violation | None:
+    if not packet.patient.deceased:
+        return None
+    if not _SAYS_DECEASED.search(text):
+        return Violation.DECEASED_NOT_STATED
+    if _CURRENT_TREATMENT.search(text):
+        return Violation.DECEASED_PRESENT_TENSE
+    return None
+
+
 def check_summary(text: str, packet: ClinicalContextPacket, user_prompt: str) -> Violation | None:
     """Every check an answer must pass, cheapest first. None means it may be shown."""
     return (
         validate_summary(text)
         or contradicts_facts(text, packet)
         or unsupported_numbers(text, packet, user_prompt)
+        or deceased_violation(text, packet)
     )

@@ -9,6 +9,7 @@ from clinical_context.llm.checks import (
     Violation,
     check_summary,
     contradicts_facts,
+    deceased_violation,
     unsupported_numbers,
     validate_summary,
 )
@@ -238,3 +239,79 @@ def test_check_summary_runs_the_word_checks_then_the_record_checks():
 
 def test_every_violation_has_a_reason_the_retry_can_give_the_model():
     assert set(REJECTION_REASONS) == set(Violation)
+
+
+# ---- a deceased patient must be described as deceased, and not as currently on treatment
+#      (found by the evaluation: three of four deceased patients were summarized as if living)
+
+DECEASED_PATIENT = real_packet("Floyd420_Jerde200")  # deceased at 95
+LIVING_PATIENT = real_packet("Aaron697_Brekke496")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "A 95-year-old male had chronic heart failure and took several medications.",
+        "The patient is recorded as active with heart failure and Alzheimer's disease.",
+        "The patient's last recorded medications include furosemide and insulin.",
+    ],
+)
+def test_a_deceased_patients_summary_that_never_says_so_is_rejected(text):
+    assert deceased_violation(text, DECEASED_PATIENT) == Violation.DECEASED_NOT_STATED
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "A 95-year-old male, now deceased, had recorded heart failure.",
+        "The patient died at age 95; the last recorded conditions include heart failure.",
+        "The record shows the patient passed away and lists heart failure as last recorded.",
+        "DECEASED at 95, the patient had recorded heart failure.",
+    ],
+)
+def test_a_deceased_patient_described_as_deceased_is_accepted(text):
+    assert deceased_violation(text, DECEASED_PATIENT) is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "The patient is deceased and is taking furosemide.",
+        "The patient died in 2017 but is currently on insulin.",
+        "A deceased patient who is being treated for heart failure.",
+        "The patient, deceased, currently has diabetes.",
+        "The patient is deceased and is receiving warfarin.",
+    ],
+)
+def test_a_deceased_patient_described_as_currently_on_treatment_is_rejected(text):
+    assert deceased_violation(text, DECEASED_PATIENT) == Violation.DECEASED_PRESENT_TENSE
+
+
+def test_a_deceased_patient_described_in_the_past_tense_is_accepted():
+    text = "The patient is deceased; the last recorded medications were furosemide and insulin."
+
+    assert deceased_violation(text, DECEASED_PATIENT) is None
+
+
+def test_a_living_patient_is_not_held_to_either_rule():
+    # Present tense for a living patient is what the record says; nothing needs to say "deceased".
+    text = "The patient is taking metformin and has recorded active anemia."
+
+    assert deceased_violation(text, LIVING_PATIENT) is None
+
+
+def test_check_summary_applies_the_deceased_rules_after_the_others():
+    _, user = build_prompt(DECEASED_PATIENT)
+
+    assert check_summary(
+        "A 95-year-old male had recorded heart failure.", DECEASED_PATIENT, user
+    ) == (Violation.DECEASED_NOT_STATED)
+    assert check_summary("Approval is recommended.", DECEASED_PATIENT, user) == (
+        Violation.DETERMINATION_LANGUAGE  # the older rules still come first
+    )
+    assert (
+        check_summary(
+            "A 95-year-old male, now deceased, had recorded heart failure.", DECEASED_PATIENT, user
+        )
+        is None
+    )

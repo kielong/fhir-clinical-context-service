@@ -265,3 +265,35 @@ async def test_an_invented_number_then_a_faithful_answer_is_generated(ollama):
 
     assert result.block.status == "generated"
     assert "73-year-old" in result.block.text
+
+
+async def test_a_summary_of_a_deceased_patient_that_never_says_so_is_retried_and_the_retry_says_why(
+    ollama,
+):
+    route = ollama.post(CHAT)
+    route.side_effect = [
+        httpx.Response(200, json=reply("A 93-year-old male had recorded Alzheimer's disease.")),
+        httpx.Response(
+            200, json=reply("A 93-year-old male, now deceased, had recorded Alzheimer's disease.")
+        ),
+    ]
+
+    result = await run(real_packet("Jose871_Williamson769"))
+
+    assert result.block.status == "generated"
+    assert "deceased" in result.block.text
+    retry = sent(route, 1)["messages"][1]["content"]
+    assert "did not say the patient is deceased" in retry
+    assert 'must contain the word "deceased"' in retry
+
+
+async def test_a_deceased_patient_described_as_still_on_treatment_twice_is_unavailable(ollama):
+    ollama.post(CHAT).respond(
+        200, json=reply("The patient is deceased and is currently taking warfarin.")
+    )
+
+    result = await run(real_packet("Jose871_Williamson769"))
+
+    assert result.block.status == "unavailable"
+    assert result.block.reason == "policy_violation"
+    assert result.block.text is None
