@@ -44,7 +44,9 @@ curl -s localhost:8000/v1/patients/2fa15bc7-8866-461a-9000-f739e425860a/clinical
   (a deceased patient, an empty chart, a truncated list) are in [`examples/`](examples/).
 - The first start is slow: HAPI is healthy after a minute or two and the model takes about 15–20 s
   to load. The seed can be stopped and restarted without duplicating anything.
-- `make test` runs 606 tests (no network, model or Azure account needed); `make lint` checks style.
+- `make test` runs 622 tests (no network, model or Azure account needed); `make lint` checks style
+  and types (ruff and mypy). `make install` and the container use the exact versions in
+  `requirements.lock`; `make lock` re-pins them.
 - `AS_OF_DATE=2019-09-16` in `.env` matters: the Synthea sample is frozen at that date, so ages
   against today would be wrong (the example patient is 73 in the data, 80 today). Leave it unset
   against a real EHR.
@@ -78,6 +80,9 @@ the model, the facts arrive unchanged. (Diagram source: [`docs/data-flow.mmd`](d
 - **Facts in code, prose from the model.** The model never sees an id or a source and cannot write
   a fact. *Rejected:* giving the model raw FHIR and asking for the packet, where it could invent a
   source.
+- **Code grouped by what it may touch.** `fhir/` talks to HAPI, `packet/` builds the facts and is
+  pure (no network, no model, no clock, so it is testable with plain dicts), `llm/` is the only place
+  a model is used, and the routes only wire them. The tests mirror the same folders.
 - **A source on every fact; `missing` is structured.** The brief's example shows strings; here each
   gap is `{code, section, detail}`, so a program can act on it and a person can still read it.
   Allergies are included because a reviewer must not miss one.
@@ -98,7 +103,9 @@ the model, the facts arrive unchanged. (Diagram source: [`docs/data-flow.mmd`](d
   approve/deny/medically-necessary language, no "stable" or "well controlled", no "none recorded"
   for a list that has entries, no numbers the record does not contain. A failure gets **one** retry
   that says what was wrong (at temperature 0 the same prompt would just repeat itself), then the
-  summary is marked unavailable with a reason. The facts are returned either way.
+  summary is marked unavailable with a reason. The facts are returned either way. *Rejected:*
+  LangChain or LangGraph around the call: 24 more packages, and they would sit between the code and
+  the one pinned request that decides the output, without making a 4B model more deterministic.
 - **The same packet gets the same words.** Temperature 0, top_k 1 and a fixed seed were **not
   enough**: one prompt came back worded three ways depending on Ollama's prompt-cache state. So a
   finished, checked summary is remembered, and a request waits at most 45 s for a summary before
@@ -115,6 +122,10 @@ the model, the facts arrive unchanged. (Diagram source: [`docs/data-flow.mmd`](d
   address can connect, and there is no default for it. *Rejected:* a container service or managed
   database, which would change what is being demonstrated, and deploying automatically on every push,
   which would restore a database and start a paid VM for every README edit.
+- **The errors are part of the contract.** 404, 409, 422, 502 and 500 each return one fixed
+  sentence and are declared in the OpenAPI (`/docs`), and a packet is sent `Cache-Control: no-store`
+  so a browser or proxy does not keep a copy of a patient's record. The container installs from a
+  lockfile, so a rebuild next month cannot change a version.
 - **HAPI is the state.** The seed asks HAPI before loading each patient, so an interrupted load
   resumes without duplicates; HAPI runs on Postgres so data survives a restart.
 - **No patient id in any log**: a keyed hash in app logs, the server's access log redacted, HAPI's

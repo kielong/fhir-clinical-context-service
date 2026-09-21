@@ -452,7 +452,67 @@ These are constraints, not a proposed architecture.
 
 ---
 
-## 14. Sources
+## 14. After the build: what a self-review measured and changed
+
+The build was finished and reviewed once as a whole, against the assignment, before anything was
+submitted. What was measured, what was decided, and what was left alone on purpose.
+
+### Measured first
+
+- **Coverage** was 99%; the two uncovered spots were the branch that rejects a birth date that
+  looks complete but is not a real day (`2020-13-45`), and the cached settings loader. Both now have
+  tests, and each test was shown to fail when the line it guards is broken. Coverage of `src/` is 100%.
+- **Dead code:** a search for unused code found none. Every setting is read somewhere and is
+  documented in `.env.example`.
+- **History:** no secrets, `.env` files or data in any commit.
+- **Types:** with the Pydantic plugin fully on, mypy found 19 real errors, mostly untyped helpers and
+  fields that were `str` where the model wants a `Literal`. None was a runtime bug; all are fixed and
+  mypy now runs in `make lint` and in CI.
+- **Wider lint rules** (naming, simplification, comprehensions, performance) found 11 things: five
+  exception classes not ending in `Error` and six loops or `try/pass` blocks. Fixed, and the rules stay on.
+
+### Other ways to use structured outputs
+
+The summary already has to be exactly `{"summary": "..."}`. Three further shapes were tried or weighed:
+
+- **A schema that forces a citation per sentence** (each sentence carries the source ids it rests on,
+  limited by an `enum` of the ids in the prompt). Ollama enforces the shape, including `enum`,
+  `minItems`/`maxItems` and `maxLength`. But at 4B the model **cites everything it was shown** rather
+  than what a sentence uses, so the citations prove nothing, and the output was about twice as many
+  tokens. Not adopted: a citation the model cannot get right is a false assurance, which is worse than none.
+  The check that would work (every claim traces to a listed fact) is on the "next" list, and it belongs in code.
+- **A two-sentence array or a length limit in the schema.** Rejected: the checks already enforce
+  two sentences, and a schema that cuts a sentence at N characters produces broken prose.
+- **LangChain or LangGraph around the model call.** Rejected: a dry-run install adds 24 packages;
+  it does not make a temperature-0, fixed-seed model any more deterministic (the wording differed
+  with Ollama's prompt-cache state, and only remembering the finished summary fixed that); and it
+  would put a framework between the code and the one pinned request that decides the output.
+
+### Changed
+
+- **Package layout.** `fhir/` (talks to HAPI), `packet/` (models and assembly, pure), `llm/` (the only
+  model use), `routers/`; the tests mirror it. The dependency direction is one way:
+  routers, then packet and llm; `fhir` stands alone.
+- **Type checking** in the lint gate and CI.
+- **The error contract is documented**, not only implemented: 404, 409, 422, 502 and 500 are declared
+  in the OpenAPI with one shared body model, FastAPI's default 422 body (which echoes the rejected
+  input) is no longer advertised, and a test checks that each documented example is the body actually sent.
+  Packets are sent `Cache-Control: no-store`.
+- **A lockfile** for the runtime dependencies. The container installs from it; a test checks that it
+  pins every dependency to a version `pyproject.toml` allows, and that the Dockerfile installs the
+  lock before it copies the code, so the dependency layer is rebuilt only when the lock changes.
+- **Exception names** end in `Error`.
+
+### Left alone on purpose
+
+- An app factory instead of a module-level `app`: it would not change behaviour, and the tests
+  already isolate the app through dependency overrides.
+- Regrouping `scripts/`, splitting `llm/checks.py`, renaming `eval_ten.py`: each is one file or one
+  command, and moving them would only make the history harder to follow.
+
+---
+
+## 15. Sources
 
 Company
 
