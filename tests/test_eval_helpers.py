@@ -705,3 +705,42 @@ def test_records_entered_in_error_are_accounted_for_too():
     (conditions, *_) = account_for(packet, {"conditions": 3, "medications": 0, "allergies": 0})
 
     assert conditions.accounted == 3
+
+
+# ---- a long chart summarized as if the few conditions named were all of them
+
+
+def test_naming_conditions_from_a_long_chart_without_saying_there_are_more_is_flagged():
+    text = "The patient is recorded as active with sinusitis, kidney disease, and renal disease."
+
+    assert wording_flags(text, deceased=False, conditions=24) == ["partial_list"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "The patient has recorded active conditions including sinusitis and kidney disease.",
+        "Recorded conditions such as sinusitis and kidney disease.",
+        "Sinusitis, kidney disease, among other conditions.",
+        "The patient has several recorded conditions.",
+        "Sinusitis and multiple other recorded conditions.",
+        "Various conditions are recorded, from sinusitis to kidney disease.",
+    ],
+)
+def test_saying_there_are_more_is_not_flagged(text):
+    assert wording_flags(text, deceased=False, conditions=24) == []
+
+
+def test_a_short_chart_is_not_flagged_for_naming_what_it_has():
+    text = "The patient is recorded as active with seasonal allergic rhinitis and obesity."
+
+    assert wording_flags(text, deceased=False, conditions=3) == []
+
+
+def test_the_partial_list_flag_can_sit_alongside_the_deceased_flags():
+    text = "The patient is deceased and is taking furosemide for heart failure and anemia."
+
+    assert wording_flags(text, deceased=True, conditions=12) == [
+        "deceased_present_tense",
+        "partial_list",
+    ]

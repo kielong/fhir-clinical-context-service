@@ -168,7 +168,16 @@ _PRESENT_TENSE = re.compile(
 _SAYS_DECEASED = re.compile(r"\b(?:deceased|died|dead|death|passed\s+away)\b", re.IGNORECASE)
 
 
-def wording_flags(text: str, *, deceased: bool) -> list[str]:
+# A chart with more conditions than this cannot be named in two sentences, so a summary that
+# names some has to say there are more.
+_LONG_CHART = 4
+_SAYS_THERE_ARE_MORE = re.compile(
+    r"\b(?:including|such\s+as|among|other|others|several|multiple|many|various|more)\b",
+    re.IGNORECASE,
+)
+
+
+def wording_flags(text: str, *, deceased: bool, conditions: int = 0) -> list[str]:
     flags = []
     if deceased:
         if not _SAYS_DECEASED.search(text):
@@ -177,6 +186,8 @@ def wording_flags(text: str, *, deceased: bool) -> list[str]:
             flags.append("deceased_present_tense")
     elif _PRESENT_TENSE.search(text):
         flags.append("present_tense")
+    if conditions >= _LONG_CHART and not _SAYS_THERE_ARE_MORE.search(text):
+        flags.append("partial_list")
     return flags
 
 

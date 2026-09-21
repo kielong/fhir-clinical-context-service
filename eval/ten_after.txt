@@ -1,0 +1,256 @@
+
+==== 1/10  Patient/1000  (73-year-old male, living)
+summary: generated  model=gemma3:4b
+  The patient is recorded as active with anemia, prediabetes, and obesity. He has a history of cardiac arrest and previous cardiac arrest events.
+lists: conditions 5, medications 0, allergies 0 | excluded 5/1/0 | invalid 0/0/0 | truncated False
+timing: fhir 92 ms, llm 14293 ms, total 14387 ms; time until a summary was ready 14419 ms
+completeness (packet accounts for / HAPI holds): conditions 10/10, medications 1/1, allergies 0/0 -> all accounted for
+sources: 6/6 resolved, 6/6 this patient's, 5/5 status matches, 5/5 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/1000
+    Y      Y       Y      Y    Condition/1017  (active, Anemia (disorder))
+    Y      Y       Y      Y    Condition/1016  (active, Prediabetes)
+    Y      Y       Y      Y    Condition/1012  (active, Body mass index 30+ - obesity (finding))
+    Y      Y       Y      Y    Condition/1004  (active, Cardiac Arrest)
+    Y      Y       Y      Y    Condition/1005  (active, History of cardiac arrest (situation))
+
+==== 2/10  Patient/1319  (95-year-old male, deceased)
+summary: generated  model=gemma3:4b
+  The deceased 95-year-old male was recorded as having chronic congestive heart failure, Alzheimer’s disease, and carcinoma in situ of the prostate; he was also taking medications such as furosemide, simvastatin, and insulin.
+lists: conditions 20, medications 10, allergies 0 | excluded 3/1265/0 | invalid 0/0/0 | truncated False
+timing: fhir 1418 ms, llm 24990 ms, total 26412 ms; time until a summary was ready 26429 ms
+completeness (packet accounts for / HAPI holds): conditions 23/23, medications 1275/1275, allergies 0/0 -> all accounted for
+sources: 31/31 resolved, 31/31 this patient's, 30/30 status matches, 30/30 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/1319
+    Y      Y       Y      Y    Condition/15145  (active, Chronic congestive heart failure (disorder))
+    Y      Y       Y      Y    Condition/1588  (active, Alzheimer's disease (disorder))
+    Y      Y       Y      Y    Condition/1563  (active, Carcinoma in situ of prostate (disorder))
+    Y      Y       Y      Y    Condition/1562  (active, Neoplasm of prostate)
+    Y      Y       Y      Y    Condition/1533  (active, History of single seizure (situation))
+    Y      Y       Y      Y    Condition/1532  (active, Seizure disorder)
+    Y      Y       Y      Y    Condition/1396  (active, Hyperlipidemia)
+    Y      Y       Y      Y    Condition/1392  (active, Stroke)
+    Y      Y       Y      Y    Condition/1379  (active, Localized, primary osteoarthritis of the hand)
+    Y      Y       Y      Y    Condition/1374  (active, Chronic kidney disease stage 1 (disorder))
+    Y      Y       Y      Y    Condition/1375  (active, Diabetic renal disease (disorder))
+    Y      Y       Y      Y    Condition/1373  (active, Hyperglycemia (disorder))
+    Y      Y       Y      Y    Condition/1366  (active, Hypertriglyceridemia (disorder))
+    Y      Y       Y      Y    Condition/1367  (active, Metabolic syndrome X (disorder))
+    Y      Y       Y      Y    Condition/1362  (active, Diabetes)
+    Y      Y       Y      Y    Condition/1358  (active, Anemia (disorder))
+    Y      Y       Y      Y    Condition/1347  (active, Prediabetes)
+    Y      Y       Y      Y    Condition/1340  (active, Appendicitis)
+    Y      Y       Y      Y    Condition/1346  (active, History of appendectomy)
+    Y      Y       Y      Y    Condition/1323  (active, Hypertension)
+    Y      Y       Y      Y    MedicationRequest/19795  (active, 10 ML Furosemide 10 MG/ML Injection)
+    Y      Y       Y      Y    MedicationRequest/18986  (active, Simvistatin 10 MG)
+    Y      Y       Y      Y    MedicationRequest/15251  (active, 24 HR metoprolol succinate 100 MG Extended Release Oral Tablet [Toprol])
+    Y      Y       Y      Y    MedicationRequest/15253  (active, Lasix 40mg)
+    Y      Y       Y      Y    MedicationRequest/1589  (active, Donepezil hydrochloride 10 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/1566  (active, 0.25 ML Leuprolide Acetate 30 MG/ML Prefilled Syringe)
+    Y      Y       Y      Y    MedicationRequest/1564  (active, 1 ML DOCEtaxel 20 MG/ML Injection)
+    Y      Y       Y      Y    MedicationRequest/1387  (active, insulin human, isophane 70 UNT/ML / Regular Insulin, Human 30 UNT/ML Injectable Suspension [Humulin])
+    Y      Y       Y      Y    MedicationRequest/1368  (active, 24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/1324  (active, Hydrochlorothiazide 25 MG)
+
+==== 3/10  Patient/19807  (84-year-old female, living)
+summary: generated  model=gemma3:4b
+  The patient is recorded as active with acute bacterial sinusitis, chronic kidney disease stage 1, and diabetic renal disease. She also has recorded active Alzheimer's disease, recurrent rectal polyp, and osteoarthritis of hip.
+lists: conditions 24, medications 7, allergies 0 | excluded 4/2/0 | invalid 0/0/0 | truncated False
+timing: fhir 61 ms, llm 26174 ms, total 26237 ms; time until a summary was ready 26254 ms
+completeness (packet accounts for / HAPI holds): conditions 28/28, medications 9/9, allergies 0/0 -> all accounted for
+sources: 32/32 resolved, 32/32 this patient's, 31/31 status matches, 31/31 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/19807
+    Y      Y       Y      Y    Condition/22083  (active, Acute bacterial sinusitis (disorder))
+    Y      Y       Y      Y    Condition/20914  (active, Chronic kidney disease stage 1 (disorder))
+    Y      Y       Y      Y    Condition/20915  (active, Diabetic renal disease (disorder))
+    Y      Y       Y      Y    Condition/20378  (active, Alzheimer's disease (disorder))
+    Y      Y       Y      Y    Condition/19970  (active, Recurrent rectal polyp)
+    Y      Y       Y      Y    Condition/19912  (active, Polyp of colon)
+    Y      Y       Y      Y    Condition/19903  (active, Drug overdose)
+    Y      Y       Y      Y    Condition/19895  (active, Osteoarthritis of hip)
+    Y      Y       Y      Y    Condition/19891  (active, Macular edema and retinopathy due to type 2 diabetes mellitus (disorder))
+    Y      Y       Y      Y    Condition/19881  (active, Chronic intractable migraine without aura)
+    Y      Y       Y      Y    Condition/19877  (active, Chronic pain)
+    Y      Y       Y      Y    Condition/19873  (active, Impacted molars)
+    Y      Y       Y      Y    Condition/19869  (active, Nonproliferative diabetic retinopathy due to type 2 diabetes mellitus (disorder))
+    Y      Y       Y      Y    Condition/19865  (active, Diabetic retinopathy associated with type II diabetes mellitus (disorder))
+    Y      Y       Y      Y    Condition/19861  (active, Neuropathy due to type 2 diabetes mellitus (disorder))
+    Y      Y       Y      Y    Condition/19857  (active, Stroke)
+    Y      Y       Y      Y    Condition/19853  (active, Miscarriage in first trimester)
+    Y      Y       Y      Y    Condition/19848  (active, Hyperglycemia (disorder))
+    Y      Y       Y      Y    Condition/19849  (active, Prediabetes)
+    Y      Y       Y      Y    Condition/19838  (active, Hypertriglyceridemia (disorder))
+    Y      Y       Y      Y    Condition/19839  (active, Metabolic syndrome X (disorder))
+    Y      Y       Y      Y    Condition/19827  (active, Anemia (disorder))
+    Y      Y       Y      Y    Condition/19826  (active, Diabetes)
+    Y      Y       Y      Y    Condition/19811  (active, Hypertension)
+    Y      Y       Y      Y    MedicationRequest/21024  (active, insulin human, isophane 70 UNT/ML / Regular Insulin, Human 30 UNT/ML Injectable Suspension [Humulin])
+    Y      Y       Y      Y    MedicationRequest/20401  (active, Galantamine 4 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/20024  (active, 10 ML oxaliplatin 5 MG/ML Injection)
+    Y      Y       Y      Y    MedicationRequest/20022  (active, Leucovorin 100 MG Injection)
+    Y      Y       Y      Y    MedicationRequest/19896  (active, Naproxen sodium 220 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/19843  (active, 24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/19821  (active, Atenolol 50 MG / Chlorthalidone 25 MG Oral Tablet)
+
+==== 4/10  Patient/22089  (93-year-old male, deceased)
+summary: generated  model=gemma3:4b
+  The deceased 93-year-old male was recorded as having active conditions including Alzheimer's disease, chronic congestive heart failure, and atrial fibrillation. He was also recorded as taking multiple medications such as furosemide, donepezil, and warfarin.
+lists: conditions 10, medications 14, allergies 2 | excluded 6/5/0 | invalid 0/0/0 | truncated False
+timing: fhir 32 ms, llm 21450 ms, total 21484 ms; time until a summary was ready 21492 ms
+completeness (packet accounts for / HAPI holds): conditions 16/16, medications 19/19, allergies 2/2 -> all accounted for
+sources: 27/27 resolved, 27/27 this patient's, 26/26 status matches, 26/26 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/22089
+    Y      Y       Y      Y    Condition/22389  (active, Alzheimer's disease (disorder))
+    Y      Y       Y      Y    Condition/22283  (active, Anemia (disorder))
+    Y      Y       Y      Y    Condition/22282  (active, Chronic congestive heart failure (disorder))
+    Y      Y       Y      Y    Condition/22155  (active, Osteoporosis (disorder))
+    Y      Y       Y      Y    Condition/22145  (active, Atrial Fibrillation)
+    Y      Y       Y      Y    Condition/22126  (active, Stroke)
+    Y      Y       Y      Y    Condition/22116  (active, Carcinoma in situ of prostate (disorder))
+    Y      Y       Y      Y    Condition/22115  (active, Neoplasm of prostate)
+    Y      Y       Y      Y    Condition/22109  (active, Coronary Heart Disease)
+    Y      Y       Y      Y    Condition/22105  (active, Body mass index 30+ - obesity (finding))
+    Y      Y       Y      Y    MedicationRequest/22542  (active, 10 ML Furosemide 10 MG/ML Injection)
+    Y      Y       Y      Y    MedicationRequest/22413  (active, 24 HR Donepezil hydrochloride 10 MG / Memantine hydrochloride 28 MG Extended Release Oral Capsule)
+    Y      Y       Y      Y    MedicationRequest/22319  (active, 24 HR metoprolol succinate 100 MG Extended Release Oral Tablet [Toprol])
+    Y      Y       Y      Y    MedicationRequest/22321  (active, Lasix 40mg)
+    Y      Y       Y      Y    MedicationRequest/22156  (active, Alendronic acid 10 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/22150  (active, Digoxin 0.125 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/22148  (active, Verapamil Hydrochloride 40 MG)
+    Y      Y       Y      Y    MedicationRequest/22146  (active, Warfarin Sodium 5 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/22140  (active, Clopidogrel 75 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/22135  (active, Amlodipine 5 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/22130  (active, Simvastatin 20 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/22119  (active, 0.25 ML Leuprolide Acetate 30 MG/ML Prefilled Syringe)
+    Y      Y       Y      Y    MedicationRequest/22117  (active, 1 ML DOCEtaxel 20 MG/ML Injection)
+    Y      Y       Y      Y    MedicationRequest/22110  (active, Nitroglycerin 0.4 MG/ACTUAT Mucosal Spray)
+    Y      Y       Y      Y    AllergyIntolerance/22098  (active, Allergy to mould)
+    Y      Y       Y      Y    AllergyIntolerance/22099  (active, Allergy to peanuts)
+
+==== 5/10  Patient/22693  (2-year-old female, living)
+summary: generated  model=gemma3:4b
+  The patient is recorded as active with no conditions or allergies. There are no medications recorded in the patient's chart.
+lists: conditions 0, medications 0, allergies 0 | excluded 0/0/0 | invalid 0/0/0 | truncated False
+timing: fhir 17 ms, llm 10023 ms, total 10042 ms; time until a summary was ready 10046 ms
+completeness (packet accounts for / HAPI holds): conditions 0/0, medications 0/0, allergies 0/0 -> all accounted for
+sources: 1/1 resolved, 1/1 this patient's, 0/0 status matches, 0/0 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/22693
+
+==== 6/10  Patient/22817  (23-year-old male, living)
+summary: generated  model=gemma3:4b
+  The patient is recorded as having a body mass index of 30+ and seasonal allergic rhinitis. He is recorded as using Fexofenadine hydrochloride 30 MG Oral Tablet and an Epinephrine 1 MG/ML Auto-Injector.
+lists: conditions 2, medications 2, allergies 5 | excluded 3/2/1 | invalid 0/0/0 | truncated False
+timing: fhir 23 ms, llm 14765 ms, total 14789 ms; time until a summary was ready 14799 ms
+completeness (packet accounts for / HAPI holds): conditions 5/5, medications 4/4, allergies 6/6 -> all accounted for
+sources: 10/10 resolved, 10/10 this patient's, 9/9 status matches, 9/9 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/22817
+    Y      Y       Y      Y    Condition/22845  (active, Body mass index 30+ - obesity (finding))
+    Y      Y       Y      Y    Condition/22839  (active, Seasonal allergic rhinitis)
+    Y      Y       Y      Y    MedicationRequest/22832  (active, Fexofenadine hydrochloride 30 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/22834  (active, NDA020800 0.3 ML Epinephrine 1 MG/ML Auto-Injector)
+    Y      Y       Y      Y    AllergyIntolerance/22826  (active, Allergy to mould)
+    Y      Y       Y      Y    AllergyIntolerance/22829  (active, Allergy to tree pollen)
+    Y      Y       Y      Y    AllergyIntolerance/22828  (active, Dander (animal) allergy)
+    Y      Y       Y      Y    AllergyIntolerance/22827  (active, House dust mite allergy)
+    Y      Y       Y      Y    AllergyIntolerance/22831  (active, Shellfish allergy)
+
+==== 7/10  Patient/23227  (25-year-old female, living)
+summary: generated  model=gemma3:4b
+  The patient is recorded as active with seasonal allergic rhinitis and a low criticality allergy to bee venom. She is currently taking Camila 28 Day Pack, Loratadine 5 MG Chewable Tablet, and an epinephrine auto-injector.
+lists: conditions 1, medications 3, allergies 6 | excluded 6/1/4 | invalid 0/0/0 | truncated False
+timing: fhir 27 ms, llm 15190 ms, total 15218 ms; time until a summary was ready 15225 ms
+completeness (packet accounts for / HAPI holds): conditions 7/7, medications 4/4, allergies 10/10 -> all accounted for
+sources: 11/11 resolved, 11/11 this patient's, 10/10 status matches, 10/10 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/23227
+    Y      Y       Y      Y    Condition/23253  (active, Seasonal allergic rhinitis)
+    Y      Y       Y      Y    MedicationRequest/23737  (active, Camila 28 Day Pack)
+    Y      Y       Y      Y    MedicationRequest/23246  (active, Loratadine 5 MG Chewable Tablet)
+    Y      Y       Y      Y    MedicationRequest/23248  (active, NDA020800 0.3 ML Epinephrine 1 MG/ML Auto-Injector)
+    Y      Y       Y      Y    AllergyIntolerance/23237  (active, Allergy to bee venom)
+    Y      Y       Y      Y    AllergyIntolerance/23242  (active, Allergy to dairy product)
+    Y      Y       Y      Y    AllergyIntolerance/23244  (active, Allergy to fish)
+    Y      Y       Y      Y    AllergyIntolerance/23241  (active, Allergy to grass pollen)
+    Y      Y       Y      Y    AllergyIntolerance/23238  (active, Allergy to mould)
+    Y      Y       Y      Y    AllergyIntolerance/23245  (active, Allergy to nut)
+  ?? worth a close read: present_tense
+
+==== 8/10  Patient/23751  (14-year-old male, deceased)
+summary: generated  model=gemma3:4b
+  The deceased patient was recorded as having obesity, epilepsy, and a history of a single seizure. The patient’s recorded active medications included Diazepam, Fexofenadine hydrochloride, and an epinephrine auto-injector.
+lists: conditions 6, medications 3, allergies 7 | excluded 4/4/0 | invalid 0/0/0 | truncated False
+timing: fhir 21 ms, llm 16352 ms, total 16376 ms; time until a summary was ready 16384 ms
+completeness (packet accounts for / HAPI holds): conditions 10/10, medications 7/7, allergies 7/7 -> all accounted for
+sources: 17/17 resolved, 17/17 this patient's, 16/16 status matches, 16/16 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/23751
+    Y      Y       Y      Y    Condition/24164  (active, Body mass index 30+ - obesity (finding))
+    Y      Y       Y      Y    Condition/24094  (active, Epilepsy)
+    Y      Y       Y      Y    Condition/24093  (active, History of single seizure (situation))
+    Y      Y       Y      Y    Condition/24092  (active, Seizure disorder)
+    Y      Y       Y      Y    Condition/23860  (active, Child attention deficit disorder)
+    Y      Y       Y      Y    Condition/23774  (active, Perennial allergic rhinitis)
+    Y      Y       Y      Y    MedicationRequest/24173  (active, Diazepam [Valium])
+    Y      Y       Y      Y    MedicationRequest/23767  (active, Fexofenadine hydrochloride 30 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/23769  (active, NDA020800 0.3 ML Epinephrine 1 MG/ML Auto-Injector)
+    Y      Y       Y      Y    AllergyIntolerance/23762  (active, Allergy to grass pollen)
+    Y      Y       Y      Y    AllergyIntolerance/23760  (active, Allergy to mould)
+    Y      Y       Y      Y    AllergyIntolerance/23766  (active, Allergy to peanuts)
+    Y      Y       Y      Y    AllergyIntolerance/23763  (active, Allergy to tree pollen)
+    Y      Y       Y      Y    AllergyIntolerance/23764  (active, Allergy to wheat)
+    Y      Y       Y      Y    AllergyIntolerance/23761  (active, Dander (animal) allergy)
+    Y      Y       Y      Y    AllergyIntolerance/23765  (active, Shellfish allergy)
+
+==== 9/10  Patient/24215  (4-year-old male, living)
+summary: generated  model=gemma3:4b
+  The record indicates no active conditions or allergies are recorded. There are no medications listed in the record.
+lists: conditions 0, medications 0, allergies 0 | excluded 1/0/0 | invalid 0/0/0 | truncated False
+timing: fhir 18 ms, llm 8643 ms, total 8663 ms; time until a summary was ready 8671 ms
+completeness (packet accounts for / HAPI holds): conditions 1/1, medications 0/0, allergies 0/0 -> all accounted for
+sources: 1/1 resolved, 1/1 this patient's, 0/0 status matches, 0/0 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/24215
+
+==== 10/10  Patient/24405  (69-year-old male, deceased)
+summary: generated  model=gemma3:4b
+  The deceased patient was recorded as having non-small cell carcinoma of lung, TNM stage 1, along with several other chronic conditions including coronary heart disease and chronic kidney disease stage 1. The patient’s active medications included amlodipine, clopidogrel, nitroglycerin, simvastatin, insulin lispro, and metformin.
+lists: conditions 14, medications 6, allergies 0 | excluded 6/186/0 | invalid 0/0/0 | truncated False
+timing: fhir 582 ms, llm 20938 ms, total 21521 ms; time until a summary was ready 21527 ms
+completeness (packet accounts for / HAPI holds): conditions 20/20, medications 192/192, allergies 0/0 -> all accounted for
+sources: 21/21 resolved, 21/21 this patient's, 20/20 status matches, 20/20 text is the record's
+  found  theirs  status  text   source  (claimed status, display)
+    Y      Y       -      -    Patient/24405
+    Y      Y       Y      Y    Condition/26228  (active, Non-small cell carcinoma of lung, TNM stage 1 (disorder))
+    Y      Y       Y      Y    Condition/26220  (active, Non-small cell lung cancer (disorder))
+    Y      Y       Y      Y    Condition/26208  (active, Suspected lung cancer (situation))
+    Y      Y       Y      Y    Condition/24505  (active, Coronary Heart Disease)
+    Y      Y       Y      Y    Condition/24443  (active, Chronic kidney disease stage 1 (disorder))
+    Y      Y       Y      Y    Condition/24444  (active, Diabetic renal disease (disorder))
+    Y      Y       Y      Y    Condition/24440  (active, Hyperglycemia (disorder))
+    Y      Y       Y      Y    Condition/24441  (active, Hypertriglyceridemia (disorder))
+    Y      Y       Y      Y    Condition/24442  (active, Metabolic syndrome X (disorder))
+    Y      Y       Y      Y    Condition/24434  (active, Anemia (disorder))
+    Y      Y       Y      Y    Condition/24433  (active, Diabetes)
+    Y      Y       Y      Y    Condition/24422  (active, Prediabetes)
+    Y      Y       Y      Y    Condition/24418  (active, Body mass index 40+ - severely obese (finding))
+    Y      Y       Y      Y    Condition/24409  (active, Body mass index 30+ - obesity (finding))
+    Y      Y       Y      Y    MedicationRequest/24510  (active, Amlodipine 5 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/24506  (active, Clopidogrel 75 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/24512  (active, Nitroglycerin 0.4 MG/ACTUAT Mucosal Spray)
+    Y      Y       Y      Y    MedicationRequest/24508  (active, Simvastatin 20 MG Oral Tablet)
+    Y      Y       Y      Y    MedicationRequest/24448  (active, Insulin Lispro 100 UNT/ML Injectable Solution [Humalog])
+    Y      Y       Y      Y    MedicationRequest/24435  (active, 24 HR Metformin hydrochloride 500 MG Extended Release Oral Tablet)
+
+totals: 10 patients
+sources: resolved 157/157 (100.0%), this patient's 157/157 (100.0%), status matches 147/147 (100.0%), text is the record's 147/147 (100.0%)
+completeness: every record accounted for in 30/30 (100.0%) lists
+returned summaries that break a word rule: none
+summaries: generated 10, unavailable none
+wording flags (for a person to read, not scored): {'present_tense': 1}
+fairness is not scored here: read each summary against its facts and mark it by hand.

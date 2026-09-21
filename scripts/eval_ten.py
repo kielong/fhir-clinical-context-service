@@ -17,7 +17,8 @@ and checks, independently of the service:
 
 It does not judge whether a summary is fair: that is a person's call, so the summary text is hidden
 unless you ask for it. Wording that deserves a closer read (present-tense treatment, a deceased
-patient never called deceased) is flagged, never scored.
+patient never called deceased, a long chart named in part without saying there are more) is
+flagged, never scored.
 
   python scripts/eval_ten.py --file eval/ten_patients.txt              # the ten, one table each
   python scripts/eval_ten.py --file eval/ten_patients.txt --show-summary
@@ -149,7 +150,13 @@ def evaluate(
     summary = packet["summary"]
     text = summary["text"]
     violation = validate_summary(text) if text else None
-    flags = wording_flags(text, deceased=packet["patient"]["deceased"]) if text else []
+    flags = (
+        wording_flags(
+            text, deceased=packet["patient"]["deceased"], conditions=len(packet["conditions"])
+        )
+        if text
+        else []
+    )
     excluded = packet["meta"]["excluded_counts"]
     result = PatientResult(
         uuid=patient_id,

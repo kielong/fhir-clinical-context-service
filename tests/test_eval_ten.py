@@ -342,6 +342,16 @@ def test_a_deceased_patients_summary_that_never_says_so_is_flagged(servers):
     assert result.flags == ["deceased_not_stated"]
 
 
+def test_a_long_chart_summarized_without_saying_there_are_more_is_flagged(servers):
+    long_chart = _packet(summary=_summary(text="The patient has recorded active anemia."))
+    long_chart["conditions"] = long_chart["conditions"] * 5  # five conditions in the packet
+    servers.get(PACKET_URL).respond(200, json=long_chart)
+
+    result, _ = _run()
+
+    assert "partial_list" in result.flags
+
+
 # ---- the whole run
 
 
