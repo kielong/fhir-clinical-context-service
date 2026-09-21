@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 import synthetic as syn
 from clinical_context.config import Settings, get_settings
 from clinical_context.dependencies import get_fhir_client, get_summarizer
+from clinical_context.errors import ErrorResponse
 from clinical_context.llm.summarizer import SummaryResult
 from clinical_context.main import app
 from clinical_context.packet.models import ClinicalContextPacket, SummaryBlock
@@ -474,3 +475,78 @@ def test_the_openapi_contract_is_the_packet_model(api):
         "$ref": "#/components/schemas/ClinicalContextPacket"
     }
     assert "approved" not in json.dumps(schema)  # nothing in the contract can decide anything
+
+
+# ============================================================ the error contract, as documented
+
+ERROR_BODIES = {
+    "404": "Patient not found",
+    "409": "More than one patient matches this identifier",
+    "422": "patient_id must be 1-64 characters: letters, digits, '.' or '-'",
+    "502": "The FHIR server is unavailable",
+    "500": "Internal server error",
+}
+
+
+def _documented(api) -> dict:
+    schema = api().get("/openapi.json").json()
+    return schema["paths"]["/v1/patients/{patient_id}/clinical-context"]["get"]["responses"]
+
+
+def test_the_openapi_documents_every_error_the_endpoint_can_return(api):
+    responses = _documented(api)
+
+    for status in ERROR_BODIES:
+        body = responses[status]["content"]["application/json"]["schema"]
+        assert body == {"$ref": "#/components/schemas/ErrorResponse"}, status
+    assert set(responses) == {"200", *ERROR_BODIES}
+
+
+def test_the_openapi_does_not_advertise_the_default_validation_error_body(api):
+    # FastAPI's own 422 body echoes the rejected input; ours never does, so the contract must
+    # not describe it.
+    text = json.dumps(api().get("/openapi.json").json())
+    assert "HTTPValidationError" not in text
+
+
+def test_the_documented_example_of_each_error_is_the_body_actually_sent(hapi, api):
+    hapi.get(f"{BASE}/Patient/nobody").respond(404, json=operation_outcome())
+    hapi.get(f"{BASE}/Patient", params={"identifier": "nobody"}).respond(200, json=bundle([]))
+    hapi.get(f"{BASE}/Patient/dup").respond(404, json=operation_outcome())
+    hapi.get(f"{BASE}/Patient", params={"identifier": "dup"}).respond(
+        200, json=bundle([syn.patient("1"), syn.patient("2")])
+    )
+    hapi.get(f"{BASE}/Patient/down").respond(500, json=operation_outcome())
+    client = api()
+    documented = _documented(api)
+
+    class Exploding:
+        async def resolve_patient(self, patient_id):
+            raise RuntimeError("boom")
+
+    sent = {
+        "404": client.get(PACKET.format("nobody")),
+        "409": client.get(PACKET.format("dup")),
+        "422": client.get(PACKET.format("not a valid id!")),
+        "502": client.get(PACKET.format("down")),
+    }
+    app.dependency_overrides[get_fhir_client] = lambda: Exploding()
+    sent["500"] = client.get(PACKET.format("boom"))
+
+    for status, response in sent.items():
+        example = documented[status]["content"]["application/json"]["example"]
+        assert response.status_code == int(status)
+        assert response.json() == example == {"detail": ERROR_BODIES[status]}
+        assert ErrorResponse.model_validate(response.json())  # and it fits the declared model
+
+
+# ============================================================ what a browser or proxy may keep
+
+
+def test_a_packet_is_never_stored_by_a_browser_or_proxy(hapi, api):
+    _mount_aaron_by_identifier(hapi)
+
+    response = api().get(PACKET.format(SYNTHEA_UUID))
+
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "no-store"

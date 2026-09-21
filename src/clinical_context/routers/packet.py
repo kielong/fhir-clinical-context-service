@@ -10,11 +10,12 @@ from collections.abc import Sequence
 from datetime import UTC, date, datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from fastapi import Path as PathParam
 
 from ..config import Settings
 from ..dependencies import FhirDep, SettingsDep, SummarizerDep
+from ..errors import ERROR_RESPONSES
 from ..llm import SummaryResult
 from ..packet.assembly import assemble_packet
 from ..packet.models import ClinicalContextPacket, SummaryBlock, Timings
@@ -111,9 +112,17 @@ async def _summary_or_unavailable(
         return SummaryResult(block=block, elapsed_ms=None, attempts=0)
 
 
-@router.get("/patients/{patient_id}/clinical-context", response_model=ClinicalContextPacket)
+# ORIGIN: H-spec — Kiel's decisions: the packet is a patient's record, so a browser or proxy must
+#   not keep a copy (`no-store`), and the errors the endpoint can return are declared so /docs
+#   shows them. Lines typed by Claude Code.
+@router.get(
+    "/patients/{patient_id}/clinical-context",
+    response_model=ClinicalContextPacket,
+    responses=ERROR_RESPONSES,
+)
 async def clinical_context(
     patient_id: PatientId,
+    response: Response,
     fhir: FhirDep,
     settings: SettingsDep,
     summarize: SummarizerDep,
@@ -149,4 +158,5 @@ async def clinical_context(
         }
     )
     _log_request(patient_id, packet, fhir_ms, result.elapsed_ms, total_ms)
+    response.headers["Cache-Control"] = "no-store"
     return packet

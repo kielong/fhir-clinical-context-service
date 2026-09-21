@@ -16,6 +16,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 
 from .config import get_settings
+from .errors import (
+    AMBIGUOUS_IDENTIFIER,
+    FHIR_UNAVAILABLE,
+    INTERNAL_ERROR,
+    MALFORMED_PATIENT_ID,
+    PATIENT_NOT_FOUND,
+)
 from .fhir.client import AmbiguousPatient, FhirUnavailable, PatientNotFound
 from .llm import SummaryCache, warm_up
 from .privacy import RedactPatientIds, error_location, patient_hash
@@ -94,21 +101,19 @@ def _who(request: Request) -> str:
 @app.exception_handler(PatientNotFound)
 async def _not_found(request: Request, exc: PatientNotFound) -> JSONResponse:
     logger.info("patient not found patient=%s", _who(request))
-    return JSONResponse({"detail": "Patient not found"}, status_code=404)
+    return JSONResponse({"detail": PATIENT_NOT_FOUND}, status_code=404)
 
 
 @app.exception_handler(AmbiguousPatient)
 async def _ambiguous(request: Request, exc: AmbiguousPatient) -> JSONResponse:
     logger.warning("identifier matches several patients patient=%s", _who(request))
-    return JSONResponse(
-        {"detail": "More than one patient matches this identifier"}, status_code=409
-    )
+    return JSONResponse({"detail": AMBIGUOUS_IDENTIFIER}, status_code=409)
 
 
 @app.exception_handler(FhirUnavailable)
 async def _fhir_unavailable(request: Request, exc: FhirUnavailable) -> JSONResponse:
     logger.warning("fhir unavailable patient=%s reason=%s", _who(request), exc)
-    return JSONResponse({"detail": "The FHIR server is unavailable"}, status_code=502)
+    return JSONResponse({"detail": FHIR_UNAVAILABLE}, status_code=502)
 
 
 # ORIGIN: H-spec — Kiel's decision: FastAPI's default 422 body repeats the rejected input back to
@@ -116,8 +121,7 @@ async def _fhir_unavailable(request: Request, exc: FhirUnavailable) -> JSONRespo
 #   sentence instead. Lines typed by Claude Code.
 @app.exception_handler(RequestValidationError)
 async def _bad_request(request: Request, exc: RequestValidationError) -> JSONResponse:
-    detail = "patient_id must be 1-64 characters: letters, digits, '.' or '-'"
-    return JSONResponse({"detail": detail}, status_code=422)
+    return JSONResponse({"detail": MALFORMED_PATIENT_ID}, status_code=422)
 
 
 # ORIGIN: H-spec — Kiel's decision: the catch-all is middleware (not an Exception handler) so the
@@ -137,4 +141,4 @@ async def _catch_unexpected_errors(
             error_location(error),
             _who(request),
         )
-        return JSONResponse({"detail": "Internal server error"}, status_code=500)
+        return JSONResponse({"detail": INTERNAL_ERROR}, status_code=500)
