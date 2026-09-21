@@ -51,13 +51,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from .models import (
     AllergyFact,
     ClinicalContextPacket,
     ConditionFact,
     IncludedRules,
+    ListName,
     MedicationFact,
     MissingItem,
     PacketMeta,
@@ -84,7 +85,7 @@ class Disposition(StrEnum):
 
 # ORIGIN: H-spec — Kiel's decision: the first coding that actually has a code wins, and a bare
 #   string (older exports) is accepted as the code. Lines typed by Claude Code.
-def code_of(concept) -> str | None:
+def code_of(concept: str | dict[str, Any] | None) -> str | None:
     """The code of a CodeableConcept (or None)."""
     if isinstance(concept, str):
         return concept
@@ -96,7 +97,7 @@ def code_of(concept) -> str | None:
     return None
 
 
-def display_codeable(concept) -> str:
+def display_codeable(concept: dict[str, Any] | None) -> str:
     if not concept:
         return "unknown"
     coding = (concept.get("coding") or [{}])[0]
@@ -115,7 +116,7 @@ def medication_display(resource: dict) -> str:
     return "unknown medication"
 
 
-def _date_part(value) -> str | None:
+def _date_part(value: object) -> str | None:
     """`2019-05-03T10:00:00-05:00` -> `2019-05-03`. A year-only `2015` is kept as written."""
     return value[:10] if isinstance(value, str) and value else None
 
@@ -226,41 +227,49 @@ def _source(resource: dict) -> str:
     return f"{resource['resourceType']}/{resource['id']}"
 
 
-def _condition_candidate(resource: dict, source: str) -> tuple[str | None, Fact]:
-    fact = ConditionFact(
-        display=display_codeable(resource.get("code")),
-        clinical_status=code_of(resource.get("clinicalStatus")),
-        onset_date=condition_onset(resource),
-        source=source,
+# The status comes from the record, so it is validated against the model, not assumed. An
+# unexpected value raises a ValidationError (a ValueError), and the record is reported unreadable.
+def _condition_candidate(resource: dict, source: str) -> tuple[str | None, ConditionFact]:
+    fact = ConditionFact.model_validate(
+        {
+            "display": display_codeable(resource.get("code")),
+            "clinical_status": code_of(resource.get("clinicalStatus")),
+            "onset_date": condition_onset(resource),
+            "source": source,
+        }
     )
     return fact.onset_date, fact
 
 
-def _medication_candidate(resource: dict, source: str) -> tuple[str | None, Fact]:
-    fact = MedicationFact(
-        display=medication_display(resource),
-        status=resource["status"],
-        authored_on=medication_authored_on(resource),
-        source=source,
+def _medication_candidate(resource: dict, source: str) -> tuple[str | None, MedicationFact]:
+    fact = MedicationFact.model_validate(
+        {
+            "display": medication_display(resource),
+            "status": resource["status"],
+            "authored_on": medication_authored_on(resource),
+            "source": source,
+        }
     )
     return fact.authored_on, fact
 
 
-def _allergy_candidate(resource: dict, source: str) -> tuple[str | None, Fact]:
-    fact = AllergyFact(
-        display=display_codeable(resource.get("code")),
-        clinical_status=code_of(resource.get("clinicalStatus")),
-        criticality=resource.get("criticality"),
-        source=source,
+def _allergy_candidate(resource: dict, source: str) -> tuple[str | None, AllergyFact]:
+    fact = AllergyFact.model_validate(
+        {
+            "display": display_codeable(resource.get("code")),
+            "clinical_status": code_of(resource.get("clinicalStatus")),
+            "criticality": resource.get("criticality"),
+            "source": source,
+        }
     )
     return allergy_recorded_on(resource), fact  # the date only orders the list; it is not exposed
 
 
 @dataclass
-class Section:
-    """One list after filtering, sorting and capping."""
+class Section[F: Fact]:
+    """One list after filtering, sorting and capping. `F` is the kind of fact the list holds."""
 
-    shown: list[Fact]
+    shown: list[F]
     included_total: int  # how many qualified before the cap
     excluded: int  # real but not current
     invalid: int  # entered-in-error, dropped
@@ -271,7 +280,7 @@ class Section:
         return len(self.shown) < self.included_total
 
 
-def _newest_first(candidates: list[tuple[str | None, Fact]]) -> list[Fact]:
+def _newest_first[F: Fact](candidates: list[tuple[str | None, F]]) -> list[F]:
     # Two stable sorts: ties by display then source first, then newest date first. A missing date
     # becomes "" so it sorts last in the descending pass.
     ordered = sorted(candidates, key=lambda c: (c[1].display, c[1].source))
@@ -281,13 +290,13 @@ def _newest_first(candidates: list[tuple[str | None, Fact]]) -> list[Fact]:
 
 # ORIGIN: H-spec — Kiel's decision: a record that cannot be read is skipped and reported, never
 #   fatal. Which exception types mean "cannot be read" is Claude Code's choice.
-def _build_section(
+def _build_section[F: Fact](
     resources: list[dict],
     disposition_of: Callable[[dict], Disposition],
-    to_candidate: Callable[[dict, str], tuple[str | None, Fact]],
+    to_candidate: Callable[[dict, str], tuple[str | None, F]],
     list_cap: int,
-) -> Section:
-    candidates: list[tuple[str | None, Fact]] = []
+) -> Section[F]:
+    candidates: list[tuple[str | None, F]] = []
     excluded = invalid = unparseable = 0
     for resource in resources:
         try:
@@ -307,12 +316,12 @@ def _build_section(
 
 # ------------------------------------------------------------------ what is missing
 
-_RESOURCE_NAME = {
+_RESOURCE_NAME: dict[ListName, str] = {
     "conditions": "Condition",
     "medications": "MedicationRequest",
     "allergies": "AllergyIntolerance",
 }
-_CURRENT_PHRASE = {
+_CURRENT_PHRASE: dict[ListName, str] = {
     "conditions": "active, recurrence, or relapse Condition",
     "medications": "active or on-hold MedicationRequest",
     "allergies": "active AllergyIntolerance",
@@ -321,14 +330,14 @@ _CURRENT_PHRASE = {
 
 # ORIGIN: H-spec — Kiel's decision: singular/plural wording ("1 other ... was"), and the deceased
 #   gap's text when only a deceasedBoolean (no date) is known. Lines typed by Claude Code.
-def _empty_detail(section: str, excluded: int) -> str:
+def _empty_detail(section: ListName, excluded: int) -> str:
     if excluded == 0:
         return f"No {_RESOURCE_NAME[section]} resources on file"
     others = "1 other on file was" if excluded == 1 else f"{excluded} others on file were"
     return f"No {_CURRENT_PHRASE[section]} resources; {others} excluded as not active"
 
 
-def _unparseable_detail(section: str, count: int) -> str:
+def _unparseable_detail(section: ListName, count: int) -> str:
     name = _RESOURCE_NAME[section]
     if count == 1:
         return f"1 {name} resource could not be read and was skipped"
@@ -346,7 +355,7 @@ def compute_missing(
     *,
     deceased: bool,
     deceased_date: str | None,
-    sections: dict[str, Section],
+    sections: dict[ListName, Section[Any]],
     list_cap: int,
 ) -> list[MissingItem]:
     missing: list[MissingItem] = []
@@ -401,14 +410,17 @@ def assemble_packet(
     deceased = patient_deceased(patient)
     deceased_date = patient_deceased_date(patient)
 
-    sections = {
-        "conditions": _build_section(
-            conditions, condition_disposition, _condition_candidate, list_cap
-        ),
-        "medications": _build_section(
-            medications, medication_disposition, _medication_candidate, list_cap
-        ),
-        "allergies": _build_section(allergies, allergy_disposition, _allergy_candidate, list_cap),
+    condition_section = _build_section(
+        conditions, condition_disposition, _condition_candidate, list_cap
+    )
+    medication_section = _build_section(
+        medications, medication_disposition, _medication_candidate, list_cap
+    )
+    allergy_section = _build_section(allergies, allergy_disposition, _allergy_candidate, list_cap)
+    sections: dict[ListName, Section[Any]] = {
+        "conditions": condition_section,
+        "medications": medication_section,
+        "allergies": allergy_section,
     }
 
     return ClinicalContextPacket(
@@ -423,9 +435,9 @@ def assemble_packet(
             deceased_date=deceased_date,
             source=patient_source,
         ),
-        conditions=sections["conditions"].shown,
-        medications=sections["medications"].shown,
-        allergies=sections["allergies"].shown,
+        conditions=condition_section.shown,
+        medications=medication_section.shown,
+        allergies=allergy_section.shown,
         summary=SummaryBlock(text=None, status="unavailable", model=None, reason=None),
         missing=compute_missing(
             deceased=deceased, deceased_date=deceased_date, sections=sections, list_cap=list_cap

@@ -7,12 +7,13 @@
 import asyncio
 import contextlib
 import logging
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from .config import get_settings
 from .fhir.client import AmbiguousPatient, FhirUnavailable, PatientNotFound
@@ -47,7 +48,7 @@ _configure_logging()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # One shared async client for the life of the process: nothing blocks the event loop.
     settings = app.dependency_overrides.get(get_settings, get_settings)()
     async with httpx.AsyncClient() as client:
@@ -124,7 +125,9 @@ async def _bad_request(request: Request, exc: RequestValidationError) -> JSONRes
 #   exception's type and where it happened, because a message can contain data. Lines typed by
 #   Claude Code.
 @app.middleware("http")
-async def _catch_unexpected_errors(request: Request, call_next):
+async def _catch_unexpected_errors(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     try:
         return await call_next(request)
     except Exception as error:

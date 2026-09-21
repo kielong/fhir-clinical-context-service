@@ -13,7 +13,7 @@ import re
 import unicodedata
 
 from ..packet.models import ClinicalContextPacket
-from .checks import REJECTION_REASONS
+from .checks import REJECTION_REASONS, Violation
 
 SYSTEM_PROMPT = """\
 You write a two-sentence scan summary of one patient's chart for a utilization-management reviewer.
@@ -171,7 +171,7 @@ def build_prompt(packet: ClinicalContextPacket) -> tuple[str, str]:
     return SYSTEM_PROMPT, "\n".join(lines)
 
 
-def with_correction(user: str, problem: str) -> str:
+def with_correction(user: str, problem: Violation) -> str:
     """The retry prompt: same facts, plus what was wrong (a repeat of the same prompt at
     temperature 0 would just produce the same answer). The rejected text is not echoed back."""
     return (

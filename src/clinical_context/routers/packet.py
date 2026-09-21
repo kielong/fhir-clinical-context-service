@@ -6,6 +6,7 @@
 import asyncio
 import logging
 import time
+from collections.abc import Sequence
 from datetime import UTC, date, datetime
 from typing import Annotated, Literal
 
@@ -46,7 +47,7 @@ def _milliseconds_since(started: float) -> int:
 
 def _log_request(
     patient_id: str, packet: ClinicalContextPacket, fhir_ms: int, llm_ms: int | None, total_ms: int
-):
+) -> None:
     """One line per request: counts and timings only. Never a name, a fact, or an id."""
     meta = packet.meta
     logger.info(
@@ -72,6 +73,15 @@ def _log_request(
     )
 
 
+def _lists_or_first_error(results: Sequence[list[dict] | BaseException]) -> list[list[dict]]:
+    lists = []
+    for result in results:
+        if isinstance(result, BaseException):
+            raise result
+        lists.append(result)
+    return lists
+
+
 # ORIGIN: H-spec — Kiel's decision: the three searches run together, and if one fails we still
 #   wait for the others to finish before raising, so no task is left running (and no "exception
 #   was never retrieved" noise). Lines typed by Claude Code.
@@ -82,10 +92,7 @@ async def _fetch_lists(fhir: FhirDep, fhir_id: str) -> tuple[list[dict], list[di
         fhir.search_by_patient("AllergyIntolerance", fhir_id),
         return_exceptions=True,
     )
-    for result in results:
-        if isinstance(result, BaseException):
-            raise result
-    conditions, medications, allergies = results
+    conditions, medications, allergies = _lists_or_first_error(results)
     return conditions, medications, allergies
 
 

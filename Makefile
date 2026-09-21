@@ -18,7 +18,7 @@ test:
 	.venv/bin/pytest -q
 
 lint:
-	.venv/bin/ruff check . && .venv/bin/ruff format --check .
+	.venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/mypy
 
 format:
 	.venv/bin/ruff check --fix . && .venv/bin/ruff format .

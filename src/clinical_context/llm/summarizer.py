@@ -19,6 +19,7 @@ import hashlib
 import json
 import logging
 import time
+from collections.abc import Awaitable
 from dataclasses import dataclass
 from functools import partial
 
@@ -106,7 +107,7 @@ async def _generate(
                     )
                     break
             else:  # every attempt was rejected; the last one says why
-                reason = (
+                reason: SummaryReason = (
                     "invalid_output" if problem is Violation.INVALID_JSON else "policy_violation"
                 )
                 block = _unavailable(settings, reason)
@@ -176,8 +177,13 @@ async def summarize(
     produce = partial(
         _produce, packet, system, user, key, http=http, settings=settings, cache=cache
     )
-    detached = cache is not None and cache.remembers
-    waiting = asyncio.shield(cache.job(key, produce)) if detached else produce()
+    waiting: Awaitable[SummaryResult]
+    if cache is not None and cache.remembers:
+        detached = True
+        waiting = asyncio.shield(cache.job(key, produce))
+    else:
+        detached = False
+        waiting = produce()
     try:
         return await asyncio.wait_for(waiting, settings.summary_deadline_seconds)
     except TimeoutError:

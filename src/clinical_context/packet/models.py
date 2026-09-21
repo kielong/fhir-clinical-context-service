@@ -16,6 +16,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+# The three lists of facts, and everything a gap can be about (the lists, or the patient).
+ListName = Literal["conditions", "medications", "allergies"]
 Section = Literal["patient", "conditions", "medications", "allergies"]
 MissingCode = Literal[
     "empty_section", "truncated_section", "patient_deceased", "unparseable_resource"
