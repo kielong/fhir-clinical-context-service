@@ -9,9 +9,10 @@ two-sentence summary a reviewer can scan. The facts are assembled in code. A sma
 (Ollama, `gemma3:4b`, CPU only) writes **only the summary**, and its answer is checked before anyone
 sees it. Nothing here approves or denies care; it gathers evidence for a human to check.
 
-**Built:** HAPI FHIR on Postgres holding all 1,180 Synthea patients, one endpoint, and the local
-summary. **I would improve first:** on busy charts the summary can name a few conditions as if they
-were all of them. It is the one place the evaluation missed its own bar (below).
+**Built:** HAPI FHIR on Postgres holding all 1,180 Synthea patients, one endpoint, the local
+summary, and a one-page reviewer view. **I would improve first:** on busy charts the summary can
+name a few conditions as if they were all of them. It is the one place the evaluation missed its own
+bar (below).
 
 ## How to run
 
@@ -26,16 +27,24 @@ make install                                   # a Python 3.12 virtualenv for th
 .venv/bin/python scripts/seed_hapi.py          # all 1,180 patients in about 9 minutes; priority ones first
 make smoke                                     # /health, then one real packet
 
+open http://localhost:8000                     # the reviewer page: load a patient, click any source
 curl -s localhost:8000/v1/patients/2fa15bc7-8866-461a-9000-f739e425860a/clinical-context | python3 -m json.tool
 ```
 
+- **The reviewer page** is at `localhost:8000`. Type a patient id, or click one of the examples, and
+  it shows the facts (blue, from the FHIR record), the summary (orange, from the model, labeled as
+  not from the record), what is missing, and a link on every fact that opens the record in HAPI.
+  It is one HTML file with no build step, and it makes no decision. A page address like
+  `localhost:8000/#2fa15bc7-8866-461a-9000-f739e425860a` loads that patient. The source links use
+  `PUBLIC_FHIR_BASE_URL` from `.env` (`http://localhost:8080/fhir` by default); change it if HAPI is
+  reached at another address.
 - The endpoint is `GET /v1/patients/{id}/clinical-context`, where the id is a HAPI id or an
   identifier such as the Synthea UUID above. Interactive docs are at `localhost:8000/docs`; HAPI's
   own web interface, for checking a source by hand, is at `localhost:8080`. Real example packets
   (a deceased patient, an empty chart, a truncated list) are in [`examples/`](examples/).
 - The first start is slow: HAPI is healthy after a minute or two and the model takes about 15–20 s
   to load. The seed can be stopped and restarted without duplicating anything.
-- `make test` runs 557 tests (no network or model needed); `make lint` checks style.
+- `make test` runs 570 tests (no network or model needed); `make lint` checks style.
 - `AS_OF_DATE=2019-09-16` in `.env` matters: the Synthea sample is frozen at that date, so ages
   against today would be wrong (the example patient is 73 in the data, 80 today). Leave it unset
   against a real EHR.
@@ -80,6 +89,11 @@ the model, the facts arrive unchanged. (Diagram source: [`docs/data-flow.mmd`](d
   returning the facts; the model finishes in the background for next time.
 - **A rule is enforced, not just requested.** The evaluation showed the model ignoring the
   instruction to say a patient is deceased, so code now requires it.
+- **A thin reviewer page, kept out of the API.** The one endpoint is still the packet; the page only
+  calls it. It builds everything from text, never markup, because display names come from the
+  record; a source becomes a link only if it looks like `Type/id`; and the patient id goes in the
+  URL fragment, which a browser never sends, because the server's access log prints query strings.
+  *Rejected:* a front-end framework or build step, which would be more to explain than the page.
 - **HAPI is the state.** The seed asks HAPI before loading each patient, so an interrupted load
   resumes without duplicates; HAPI runs on Postgres so data survives a restart.
 - **No patient id in any log**: a keyed hash in app logs, the server's access log redacted, HAPI's

@@ -1,0 +1,319 @@
+<!doctype html>
+<!-- ORIGIN: AI — page typed by Claude Code, reviewed by Kiel. The rules it follows are Claude Code's
+     proposals until Kiel adopts them: facts are labeled as the FHIR record and the summary as model
+     prose; every fact links to the record it came from; the page offers no decision; a deceased
+     patient gets a banner; the patient id lives in the URL fragment, which is never sent to a server.
+     The script builds the page from text only, never from markup, because display names come from
+     the record. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clinical context packet</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --text: #111827; --muted: #4b5563; --line: #d9dde3;
+    --facts: #2563eb; --facts-bg: #e0f0ff; --facts-text: #0b1f3a;
+    --model: #ea580c; --model-bg: #ffedd5; --model-text: #3b1d06;
+    --warn: #b45309; --warn-bg: #fef3c7; --warn-text: #422006;
+    --dead: #7f1d1d; --dead-bg: #fee2e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --card: #171b21; --text: #e8eaee; --muted: #a3acb8; --line: #2b323b;
+      --facts: #6ea8ff; --facts-bg: #14263f; --facts-text: #d8e8ff;
+      --model: #ff9a5c; --model-bg: #3a2312; --model-text: #ffe4d1;
+      --warn: #fbbf24; --warn-bg: #3a2c0a; --warn-text: #fde9b0;
+      --dead: #fecaca; --dead-bg: #4a1414;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main, header { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+  header { padding-top: 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0; }
+  .lede { color: var(--muted); margin: 0 0 16px; }
+  form { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 8px; }
+  label { display: block; font-weight: 600; margin-bottom: 4px; }
+  .field { flex: 1 1 380px; max-width: 460px; }
+  input { font: inherit; padding: 8px 10px; width: 100%; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  button { font: inherit; padding: 8px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--facts); background: var(--facts); color: #fff; }
+  button:disabled { opacity: .6; cursor: wait; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 12px;
+    color: var(--muted); font-size: 13px; }
+  .examples button { padding: 3px 9px; font-size: 13px; background: transparent;
+    color: var(--text); border-color: var(--line); }
+  #status { min-height: 1.5em; color: var(--muted); }
+  #status.error { color: var(--dead); background: var(--dead-bg); padding: 10px 12px;
+    border-radius: 6px; font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--line); border-left-width: 5px;
+    border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+  .card.facts { border-left-color: var(--facts); }
+  .card.model { border-left-color: var(--model); }
+  .card.warn { border-left-color: var(--warn); background: var(--warn-bg); color: var(--warn-text); }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-bottom: 6px; }
+  .pill { font-size: 12px; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+  .pill.facts { background: var(--facts-bg); color: var(--facts-text); }
+  .pill.model { background: var(--model-bg); color: var(--model-text); }
+  .note { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
+  .banner { background: var(--dead-bg); color: var(--dead); border: 1px solid var(--dead);
+    border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-weight: 700; }
+  .summary-text { font-size: 17px; margin: 6px 0; }
+  .unavailable { font-weight: 600; margin: 6px 0; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line);
+    vertical-align: top; }
+  th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  .table-wrap { overflow-x: auto; }
+  .empty { color: var(--muted); margin: 4px 0; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  ul { margin: 4px 0; padding-left: 20px; }
+  details { margin: 12px 0 32px; }
+  pre { overflow-x: auto; background: var(--card); border: 1px solid var(--line);
+    border-radius: 6px; padding: 10px; font-size: 12px; }
+  a { color: var(--facts); }
+</style>
+</head>
+<body data-fhir-base="__FHIR_BASE__">
+<header>
+  <h1>Clinical context packet</h1>
+  <p class="lede">Evidence gathered from the FHIR record for a human reviewer. Every fact links to
+    the record it came from. This page makes no decision.</p>
+</header>
+<main>
+  <form id="lookup" autocomplete="off">
+    <div class="field">
+      <label for="patient-id">Patient id</label>
+      <input id="patient-id" name="patient-id" required maxlength="64"
+             pattern="[A-Za-z0-9.\-]{1,64}"
+             placeholder="2fa15bc7-8866-461a-9000-f739e425860a">
+    </div>
+    <button id="load" type="submit">Load packet</button>
+  </form>
+  <div class="examples">
+    Synthea sample patients:
+    <button type="button" data-id="2fa15bc7-8866-461a-9000-f739e425860a">assignment example</button>
+    <button type="button" data-id="0979f4fe-08c5-414e-ba1c-6ccf852bcce4">deceased, 1,275 medications</button>
+    <button type="button" data-id="9da0dcfc-05e3-4e8e-95ff-b04b56f748be">busy chart</button>
+    <button type="button" data-id="e2129449-9c68-4155-a826-e22091aa4742">empty chart</button>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+  <div id="packet" hidden></div>
+</main>
+<script>
+(() => {
+  "use strict";
+
+  const FHIR_BASE = document.body.dataset.fhirBase;
+  const ID_PATTERN = /^[A-Za-z0-9.\-]{1,64}$/;
+  // Only something shaped like "Type/id" becomes a link, so a source can never smuggle in a URL.
+  const SOURCE_PATTERN = /^[A-Za-z]+\/[A-Za-z0-9.\-]{1,64}$/;
+  const SUMMARY_WAIT = "Loading the packet. The summary can take up to 45 seconds.";
+
+  const WHY_UNAVAILABLE = {
+    model_unreachable: "The language model could not be reached.",
+    timeout: "The language model took too long. It keeps working, so try again in a minute.",
+    invalid_output: "The language model's answer was not usable.",
+    policy_violation: "The language model's answer broke a rule and was withheld.",
+    internal_error: "The summary could not be produced because of a service error.",
+  };
+  const GAP_LABEL = {
+    empty_section: "Nothing shown",
+    truncated_section: "List cut",
+    unparseable_resource: "Unreadable records",
+    patient_deceased: "Deceased",
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  // Everything from a packet goes into the page as text. append() of a string makes a text node,
+  // never markup, so hostile display names in a record cannot do anything.
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    for (const [name, value] of Object.entries(attrs || {})) node.setAttribute(name, value);
+    node.append(...children);
+    return node;
+  }
+
+  function sourceCell(source) {
+    if (!SOURCE_PATTERN.test(source)) return el("span", {}, source);
+    return el("a", {
+      href: `${FHIR_BASE}/${source}?_format=json&_pretty=true`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+    }, source);
+  }
+
+  function card(kind, title, pillText, ...body) {
+    return el("section", { class: `card ${kind}` },
+      el("div", { class: "card-head" }, el("h2", {}, title),
+        pillText ? el("span", { class: `pill ${kind}` }, pillText) : ""),
+      ...body);
+  }
+
+  function table(headings, rows) {
+    return el("div", { class: "table-wrap" }, el("table", {},
+      el("thead", {}, el("tr", {}, ...headings.map((h) => el("th", {}, h)))),
+      el("tbody", {}, ...rows.map((cells) => el("tr", {}, ...cells.map((c) => el("td", {}, c)))))));
+  }
+
+  function factsCard(title, headings, rows, excluded, invalid) {
+    const counts = [`${rows.length} shown`];
+    if (excluded) counts.push(`${excluded} more on file, not shown (no longer active)`);
+    if (invalid) counts.push(`${invalid} entered in error and dropped`);
+    return card("facts", title, "FHIR record",
+      el("p", { class: "note" }, counts.join(" · ")),
+      rows.length ? table(headings, rows) : el("p", { class: "empty" }, "None shown."));
+  }
+
+  function summaryCard(summary) {
+    const body = summary.status === "generated"
+      ? [el("p", { class: "summary-text" }, summary.text),
+         el("p", { class: "note" }, `Model: ${summary.model}`)]
+      : [el("p", { class: "unavailable" },
+          `Summary unavailable. ${WHY_UNAVAILABLE[summary.reason] || "It could not be produced."}`),
+         el("p", { class: "note" }, "Every fact on this page is unaffected.")];
+    return card("model", "Summary", "Language model · not from the record",
+      el("p", { class: "note" },
+        "Written by a small language model from the facts below and checked by rules. " +
+        "A scan aid; the facts are the evidence."),
+      ...body);
+  }
+
+  function patientCard(patient, meta) {
+    const age = patient.age_years === null ? "age unknown"
+      : `${patient.age_years} years old as of ${meta.as_of}`;
+    return card("facts", patient.display_name || "Name not recorded", "FHIR record",
+      el("p", {}, [age, patient.gender, patient.birth_date && `born ${patient.birth_date}`]
+        .filter(Boolean).join(" · ")),
+      el("p", { class: "note" }, "Source: ", sourceCell(patient.source)));
+  }
+
+  function missingCard(missing) {
+    return card(missing.length ? "warn" : "facts", "What is missing", "",
+      missing.length
+        ? el("ul", {}, ...missing.map((m) =>
+            el("li", {}, el("strong", {}, GAP_LABEL[m.code] || m.code), " — ", m.detail)))
+        : el("p", { class: "empty" }, "Nothing flagged."));
+  }
+
+  function metaCard(meta) {
+    const asOfWhy = meta.as_of_source === "config"
+      ? "set by configuration (the sample data is frozen at that date)" : "today";
+    const timing = meta.timings_ms
+      ? `facts ${meta.timings_ms.fhir} ms · summary ${meta.timings_ms.llm ?? "none"} ms · ` +
+        `total ${meta.timings_ms.total} ms` : "not recorded";
+    const rows = [
+      ["As of", `${meta.as_of} (${asOfWhy})`],
+      ["Rule for conditions", meta.included.conditions],
+      ["Rule for medications", meta.included.medications],
+      ["Rule for allergies", meta.included.allergies],
+      ["Left out as not active", `${meta.excluded_counts.conditions} conditions · ` +
+        `${meta.excluded_counts.medications} medications · ${meta.excluded_counts.allergies} allergies`],
+      ["Entered in error, dropped", `${meta.invalid_counts.conditions} · ` +
+        `${meta.invalid_counts.medications} · ${meta.invalid_counts.allergies}`],
+      ["A list was cut", meta.truncated ? "yes" : "no"],
+      ["Timings", timing],
+      ["Generated", meta.generated_at],
+    ];
+    return card("facts", "About this packet", "",
+      el("dl", {}, ...rows.flatMap(([k, v]) => [el("dt", {}, k), el("dd", {}, v)])));
+  }
+
+  function render(packet) {
+    const { patient, meta } = packet;
+    const parts = [];
+    if (patient.deceased) {
+      const when = patient.deceased_date ? ` on ${patient.deceased_date}` : "";
+      parts.push(el("div", { class: "banner", role: "alert" },
+        `Deceased${when}. Statuses below are the last recorded, not current treatment.`));
+    }
+    parts.push(
+      patientCard(patient, meta),
+      summaryCard(packet.summary),
+      factsCard("Conditions", ["Condition", "Status", "Onset", "Source"],
+        packet.conditions.map((c) => [c.display, c.clinical_status, c.onset_date || "not recorded",
+          sourceCell(c.source)]), meta.excluded_counts.conditions, meta.invalid_counts.conditions),
+      factsCard("Medications", ["Medication", "Status", "Prescribed", "Source"],
+        packet.medications.map((m) => [m.display, m.status, m.authored_on || "not recorded",
+          sourceCell(m.source)]), meta.excluded_counts.medications, meta.invalid_counts.medications),
+      factsCard("Allergies", ["Allergy", "Status", "Criticality", "Source"],
+        packet.allergies.map((a) => [a.display, a.clinical_status || "not recorded",
+          a.criticality || "not recorded", sourceCell(a.source)]),
+        meta.excluded_counts.allergies, meta.invalid_counts.allergies),
+      missingCard(packet.missing),
+      metaCard(meta),
+      el("details", {}, el("summary", {}, "Raw JSON, exactly as the service returned it"),
+        el("pre", {}, JSON.stringify(packet, null, 2))));
+    $("packet").replaceChildren(...parts);
+    $("packet").hidden = false;
+  }
+
+  function setStatus(message, isError) {
+    const box = $("status");
+    box.textContent = message;
+    box.className = isError ? "error" : "";
+  }
+
+  let inFlight = null;
+
+  async function load(rawId) {
+    const id = rawId.trim();
+    if (!ID_PATTERN.test(id)) {
+      setStatus("Enter a patient id: 1 to 64 letters, digits, '.' or '-'.", true);
+      return;
+    }
+    if (inFlight) inFlight.abort();
+    const mine = (inFlight = new AbortController());
+    history.replaceState(null, "", "#" + encodeURIComponent(id));
+    $("packet").hidden = true;
+    $("load").disabled = true;
+    setStatus(SUMMARY_WAIT, false);
+    try {
+      const response = await fetch(`/v1/patients/${encodeURIComponent(id)}/clinical-context`,
+        { signal: mine.signal, headers: { Accept: "application/json" } });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        setStatus(body && typeof body.detail === "string"
+          ? body.detail : `The service answered with status ${response.status}.`, true);
+        return;
+      }
+      render(body);
+      setStatus("", false);
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setStatus("Could not reach the service. Is it running?", true);
+      }
+    } finally {
+      if (inFlight === mine) $("load").disabled = false;
+    }
+  }
+
+  $("lookup").addEventListener("submit", (event) => {
+    event.preventDefault();
+    load($("patient-id").value);
+  });
+  for (const button of document.querySelectorAll(".examples button")) {
+    button.addEventListener("click", () => {
+      $("patient-id").value = button.dataset.id;
+      load(button.dataset.id);
+    });
+  }
+
+  // A link like /#2fa15bc7-... loads that patient. A fragment is never sent to the server, so the
+  // id stays out of every access log; a query string would not.
+  const fromLink = decodeURIComponent(location.hash.slice(1));
+  if (fromLink) {
+    $("patient-id").value = fromLink;
+    load(fromLink);
+  }
+})();
+</script>
+</body>
+</html>

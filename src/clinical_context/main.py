@@ -18,7 +18,7 @@ from .config import get_settings
 from .fhir_client import AmbiguousPatient, FhirUnavailable, PatientNotFound
 from .llm import SummaryCache, warm_up
 from .privacy import RedactPatientIds, error_location, patient_hash
-from .routers import health, packet
+from .routers import health, packet, reviewer
 
 logger = logging.getLogger("clinical_context.request")
 
@@ -71,6 +71,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Clinical Context Packet Service", lifespan=lifespan)
 app.include_router(health.router)
 app.include_router(packet.router)
+app.include_router(reviewer.router)
 
 
 # ---------------------------------------------------------------------------------- error contract
