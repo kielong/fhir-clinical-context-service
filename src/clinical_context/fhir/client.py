@@ -11,9 +11,9 @@ HOW A PATIENT IS FOUND
   2. If that is a 400, 404 or 410, the id may be an identifier instead (the Synthea UUID in the
      assignment's example is one), so GET Patient?identifier={id}. No identifier system is given:
      the UUID is stored under two systems on ONE patient, so a correct match is still one patient.
-  3. No match -> PatientNotFound. Two or more -> AmbiguousPatient (it means duplicates from a bad
-     load; showing one of them at random would be worse than saying so).
-  Any other answer (5xx, 401/403, no answer, a body that is not a Patient) -> FhirUnavailable.
+  3. No match -> PatientNotFoundError. Two or more -> AmbiguousPatientError (it means duplicates
+     from a bad load; showing one of them at random would be worse than saying so).
+  Any other answer (5xx, 401/403, no answer, a body that is not a Patient) -> FhirUnavailableError.
   "I do not know" must never be reported as "there is no such patient".
 
 HOW A LIST IS FETCHED
@@ -36,15 +36,15 @@ REQUEST_HEADERS = {"Accept": "application/fhir+json", "Cache-Control": "no-cache
 NOT_FOUND_BY_ID = frozenset({400, 404, 410})
 
 
-class PatientNotFound(Exception):
+class PatientNotFoundError(Exception):
     """Neither a HAPI id nor an identifier matched."""
 
 
-class AmbiguousPatient(Exception):
+class AmbiguousPatientError(Exception):
     """More than one Patient carries this identifier."""
 
 
-class FhirUnavailable(Exception):
+class FhirUnavailableError(Exception):
     """The FHIR server failed, timed out, or answered with something unusable."""
 
 
@@ -82,7 +82,7 @@ class FhirClient:
                 url, params=params, headers=REQUEST_HEADERS, timeout=self._timeout
             )
         except httpx.HTTPError as error:  # refused, timed out, protocol error
-            raise FhirUnavailable(f"{type(error).__name__} calling the FHIR server") from error
+            raise FhirUnavailableError(f"{type(error).__name__} calling the FHIR server") from error
 
     # ORIGIN: H-spec — Kiel's decision: each next link is re-based onto the configured server,
     #   because HAPI builds paging links from its own idea of its address, which may be
@@ -99,14 +99,18 @@ class FhirClient:
         try:
             return response.json()
         except ValueError as error:
-            raise FhirUnavailable("the FHIR server returned a body that is not JSON") from error
+            raise FhirUnavailableError(
+                "the FHIR server returned a body that is not JSON"
+            ) from error
 
     # ORIGIN: H-spec — Kiel's decision: a Patient with no id cannot be given a source, so it is
     #   unusable. Lines typed by Claude Code.
     @staticmethod
     def _usable_patient(resource: dict) -> dict:
         if resource.get("resourceType") != "Patient" or not resource.get("id"):
-            raise FhirUnavailable("the FHIR server returned something that is not a usable Patient")
+            raise FhirUnavailableError(
+                "the FHIR server returned something that is not a usable Patient"
+            )
         return resource
 
     # ------------------------------------------------------------------ finding a patient
@@ -116,7 +120,7 @@ class FhirClient:
         if response.status_code == 200:
             return self._usable_patient(self._json(response))
         if response.status_code not in NOT_FOUND_BY_ID:
-            raise FhirUnavailable(f"HTTP {response.status_code} looking up a Patient by id")
+            raise FhirUnavailableError(f"HTTP {response.status_code} looking up a Patient by id")
 
         # ORIGIN: H-spec — Kiel's decision: _count=2 is enough to tell one match from several
         #   without downloading them all. Lines typed by Claude Code.
@@ -124,12 +128,14 @@ class FhirClient:
             f"{self._base}/Patient", params={"identifier": patient_id, "_count": 2}
         )
         if response.status_code != 200:
-            raise FhirUnavailable(f"HTTP {response.status_code} searching Patient by identifier")
+            raise FhirUnavailableError(
+                f"HTTP {response.status_code} searching Patient by identifier"
+            )
         matches = _matches(self._json(response), "Patient")
         if not matches:
-            raise PatientNotFound
+            raise PatientNotFoundError
         if len(matches) > 1:
-            raise AmbiguousPatient
+            raise AmbiguousPatientError
         return self._usable_patient(matches[0])
 
     # ------------------------------------------------------------------ fetching a list
@@ -143,7 +149,7 @@ class FhirClient:
         )
         for page in range(1, self._max_pages + 1):
             if response.status_code != 200:
-                raise FhirUnavailable(f"HTTP {response.status_code} searching {resource_type}")
+                raise FhirUnavailableError(f"HTTP {response.status_code} searching {resource_type}")
             bundle = self._json(response)
             resources.extend(_matches(bundle, resource_type))
             next_url = _next_link(bundle)
@@ -152,7 +158,7 @@ class FhirClient:
             if page < self._max_pages:
                 response = await self._get(self._rebase(next_url))
         # Still a next link after the last allowed page: fail rather than return a partial list.
-        raise FhirUnavailable(
+        raise FhirUnavailableError(
             f"{resource_type} search needs more than {self._max_pages} pages; giving up"
         )
 
@@ -163,6 +169,6 @@ class FhirClient:
     async def ping(self) -> bool:
         try:
             response = await self._get(f"{self._base}/metadata")
-        except FhirUnavailable:
+        except FhirUnavailableError:
             return False
         return response.status_code == 200

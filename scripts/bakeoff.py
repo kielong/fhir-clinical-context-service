@@ -19,6 +19,7 @@ Exit status: 0 if it ran; 2 if a model is not pulled, a patient was not found, o
 
 import argparse
 import asyncio
+import contextlib
 import json
 import statistics
 import sys
@@ -30,7 +31,7 @@ import httpx
 
 from clinical_context.config import Settings
 from clinical_context.llm.checks import check_summary
-from clinical_context.llm.ollama import InvalidOutput, ModelUnreachable, ask
+from clinical_context.llm.ollama import InvalidOutputError, ModelUnreachableError, ask
 from clinical_context.llm.prompt import build_prompt
 from clinical_context.packet.models import ClinicalContextPacket
 
@@ -96,10 +97,8 @@ def tokens_per_second(timings: dict | None) -> float | None:
 async def unload(http: httpx.AsyncClient, settings: Settings) -> None:
     """Drop the model from memory, so the next request has to load it. Best effort."""
     body = {"model": settings.ollama_model, "messages": [], "keep_alive": 0}
-    try:
+    with contextlib.suppress(httpx.HTTPError):
         await http.post(f"{settings.ollama_host}/api/chat", json=body, timeout=60)
-    except httpx.HTTPError:
-        pass
 
 
 async def _processor(http: httpx.AsyncClient, settings: Settings) -> str | None:
@@ -126,9 +125,9 @@ async def _measure(
     outcome, answer = "ok", None
     try:
         answer = await ask(http, settings, system, user)
-    except InvalidOutput:
+    except InvalidOutputError:
         outcome = "invalid_json"
-    except ModelUnreachable as error:
+    except ModelUnreachableError as error:
         outcome = "not_available" if str(error) == "HTTP 404" else "unreachable"
     except httpx.TimeoutException:
         outcome = "timeout"
@@ -256,10 +255,8 @@ async def _environment(
     http: httpx.AsyncClient, host: str, note: str | None, runs: list[Run]
 ) -> dict:
     version = None
-    try:
+    with contextlib.suppress(httpx.HTTPError, ValueError):
         version = (await http.get(f"{host}/api/version", timeout=10)).json().get("version")
-    except (httpx.HTTPError, ValueError):
-        pass
     processor = next((r.processor for r in runs if r.processor), None)
     return {"note": note, "ollama_version": version, "processor": processor}
 

@@ -13,10 +13,10 @@ import pytest
 import synthetic as syn
 from clinical_context.config import Settings
 from clinical_context.fhir.client import (
-    AmbiguousPatient,
+    AmbiguousPatientError,
     FhirClient,
-    FhirUnavailable,
-    PatientNotFound,
+    FhirUnavailableError,
+    PatientNotFoundError,
 )
 from fhir_mocks import BASE, bundle, entry, operation_outcome
 
@@ -77,7 +77,7 @@ async def test_no_match_by_id_or_identifier_is_patient_not_found(hapi):
     hapi.get(f"{BASE}/Patient", params={"identifier": "nobody"}).respond(200, json=bundle([]))
 
     async with make_client() as fhir:
-        with pytest.raises(PatientNotFound):
+        with pytest.raises(PatientNotFoundError):
             await fhir.resolve_patient("nobody")
 
 
@@ -89,7 +89,7 @@ async def test_two_patients_with_one_identifier_is_ambiguous(hapi):
     )
 
     async with make_client() as fhir:
-        with pytest.raises(AmbiguousPatient):
+        with pytest.raises(AmbiguousPatientError):
             await fhir.resolve_patient("dup")
 
 
@@ -116,7 +116,7 @@ async def test_the_id_is_url_encoded_into_the_path(hapi):
     hapi.get(f"{BASE}/Patient").respond(200, json=bundle([]))
 
     async with make_client() as fhir:
-        with pytest.raises(PatientNotFound):
+        with pytest.raises(PatientNotFoundError):
             await fhir.resolve_patient("a/b?c")
 
     assert route.calls.last.request.url.raw_path == b"/fhir/Patient/a%2Fb%3Fc"
@@ -143,7 +143,7 @@ async def test_a_network_failure_is_fhir_unavailable(hapi, failure):
     hapi.get(f"{BASE}/Patient/1000").mock(side_effect=failure)
 
     async with make_client() as fhir:
-        with pytest.raises(FhirUnavailable):
+        with pytest.raises(FhirUnavailableError):
             await fhir.resolve_patient("1000")
 
 
@@ -154,7 +154,7 @@ async def test_an_unexpected_status_by_id_is_fhir_unavailable_not_not_found(hapi
     hapi.get(f"{BASE}/Patient/1000").respond(status, json=operation_outcome("boom"))
 
     async with make_client() as fhir:
-        with pytest.raises(FhirUnavailable):
+        with pytest.raises(FhirUnavailableError):
             await fhir.resolve_patient("1000")
 
 
@@ -163,7 +163,7 @@ async def test_an_error_on_the_identifier_search_is_fhir_unavailable(hapi):
     hapi.get(f"{BASE}/Patient", params={"identifier": "x"}).respond(500, json=operation_outcome())
 
     async with make_client() as fhir:
-        with pytest.raises(FhirUnavailable):
+        with pytest.raises(FhirUnavailableError):
             await fhir.resolve_patient("x")
 
 
@@ -179,7 +179,7 @@ async def test_a_200_that_is_not_a_usable_patient_is_fhir_unavailable(hapi, body
     hapi.get(f"{BASE}/Patient/1000").mock(return_value=body)
 
     async with make_client() as fhir:
-        with pytest.raises(FhirUnavailable):
+        with pytest.raises(FhirUnavailableError):
             await fhir.resolve_patient("1000")
 
 
@@ -304,7 +304,7 @@ async def test_a_search_that_never_ends_hits_the_page_limit_and_fails_loudly(hap
     hapi.get(f"{BASE}/Condition").respond(200, json=loop)
 
     async with make_client(fhir_max_pages=3) as fhir:
-        with pytest.raises(FhirUnavailable, match="3 pages"):
+        with pytest.raises(FhirUnavailableError, match="3 pages"):
             await fhir.search_by_patient("Condition", "1000")
 
     assert len(hapi.calls) == 3  # it stopped at the limit; it did not loop
@@ -332,7 +332,7 @@ async def test_a_failure_on_a_later_page_fails_the_whole_search(hapi):
     )
 
     async with make_client() as fhir:
-        with pytest.raises(FhirUnavailable):
+        with pytest.raises(FhirUnavailableError):
             await fhir.search_by_patient("Condition", "1000")
 
 
@@ -340,7 +340,7 @@ async def test_a_search_timeout_is_fhir_unavailable(hapi):
     hapi.get(f"{BASE}/Condition").mock(side_effect=httpx.ReadTimeout("slow"))
 
     async with make_client() as fhir:
-        with pytest.raises(FhirUnavailable):
+        with pytest.raises(FhirUnavailableError):
             await fhir.search_by_patient("Condition", "1000")
 
 

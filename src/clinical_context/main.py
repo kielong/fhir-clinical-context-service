@@ -23,7 +23,7 @@ from .errors import (
     MALFORMED_PATIENT_ID,
     PATIENT_NOT_FOUND,
 )
-from .fhir.client import AmbiguousPatient, FhirUnavailable, PatientNotFound
+from .fhir.client import AmbiguousPatientError, FhirUnavailableError, PatientNotFoundError
 from .llm import SummaryCache, warm_up
 from .privacy import RedactPatientIds, error_location, patient_hash
 from .routers import health, packet, reviewer
@@ -98,20 +98,20 @@ def _who(request: Request) -> str:
     return patient_hash(str(request.path_params.get("patient_id", "")))
 
 
-@app.exception_handler(PatientNotFound)
-async def _not_found(request: Request, exc: PatientNotFound) -> JSONResponse:
+@app.exception_handler(PatientNotFoundError)
+async def _not_found(request: Request, exc: PatientNotFoundError) -> JSONResponse:
     logger.info("patient not found patient=%s", _who(request))
     return JSONResponse({"detail": PATIENT_NOT_FOUND}, status_code=404)
 
 
-@app.exception_handler(AmbiguousPatient)
-async def _ambiguous(request: Request, exc: AmbiguousPatient) -> JSONResponse:
+@app.exception_handler(AmbiguousPatientError)
+async def _ambiguous(request: Request, exc: AmbiguousPatientError) -> JSONResponse:
     logger.warning("identifier matches several patients patient=%s", _who(request))
     return JSONResponse({"detail": AMBIGUOUS_IDENTIFIER}, status_code=409)
 
 
-@app.exception_handler(FhirUnavailable)
-async def _fhir_unavailable(request: Request, exc: FhirUnavailable) -> JSONResponse:
+@app.exception_handler(FhirUnavailableError)
+async def _fhir_unavailable(request: Request, exc: FhirUnavailableError) -> JSONResponse:
     logger.warning("fhir unavailable patient=%s reason=%s", _who(request), exc)
     return JSONResponse({"detail": FHIR_UNAVAILABLE}, status_code=502)
 

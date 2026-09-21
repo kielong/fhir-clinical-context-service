@@ -49,12 +49,17 @@ class SourceCheck:
 
 def claims_of(packet: dict) -> list[Claim]:
     claims = [Claim("patient", packet["patient"]["source"], None, "")]
-    for fact in packet["conditions"]:
-        claims.append(Claim("condition", fact["source"], fact["clinical_status"], fact["display"]))
-    for fact in packet["medications"]:
-        claims.append(Claim("medication", fact["source"], fact["status"], fact["display"]))
-    for fact in packet["allergies"]:
-        claims.append(Claim("allergy", fact["source"], fact["clinical_status"], fact["display"]))
+    claims.extend(
+        Claim("condition", f["source"], f["clinical_status"], f["display"])
+        for f in packet["conditions"]
+    )
+    claims.extend(
+        Claim("medication", f["source"], f["status"], f["display"]) for f in packet["medications"]
+    )
+    claims.extend(
+        Claim("allergy", f["source"], f["clinical_status"], f["display"])
+        for f in packet["allergies"]
+    )
     return claims
 
 

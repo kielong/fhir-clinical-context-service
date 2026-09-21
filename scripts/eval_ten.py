@@ -141,7 +141,10 @@ def evaluate(
     problem = None
     try:
         for claim in claims_of(packet):
-            checks.append(check_claim(claim, fetch_resource(client, fhir, claim.source), fhir_id))
+            # A loop, not extend(): if a fetch fails part-way, the claims already checked are kept.
+            checks.append(  # noqa: PERF401
+                check_claim(claim, fetch_resource(client, fhir, claim.source), fhir_id)
+            )
         totals = {s: fetch_total(client, fhir, FHIR_TYPES[s], fhir_id) for s in SECTIONS}
         accounts = account_for(packet, totals)
     except httpx.HTTPError as error:

@@ -439,6 +439,17 @@ def test_age_is_null_without_a_usable_birth_date():
     assert patient_age_years(syn.patient(birth="1970"), as_of) is None  # year-only: do not guess
 
 
+@pytest.mark.parametrize("birth", ["2020-13-45", "1990-02-30", "0000-00-00"])
+def test_a_birth_date_that_looks_complete_but_is_not_a_real_day_gives_no_age(birth):
+    assert patient_age_years(syn.patient(birth=birth), date(2019, 9, 16)) is None
+
+
+def test_a_death_date_that_is_not_a_real_day_is_ignored_rather_than_used():
+    patient = syn.patient(birth="1950-06-01", deceased_datetime="2000-02-30T00:00:00Z")
+
+    assert patient_age_years(patient, date(2019, 9, 16)) == 69  # measured to the reference date
+
+
 # ============================================================ display rules
 
 

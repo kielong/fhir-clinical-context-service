@@ -54,11 +54,11 @@ class Answer(NamedTuple):
     timings: dict[str, int] | None  # Ollama's own duration and token counts, converted to ms
 
 
-class ModelUnreachable(Exception):
+class ModelUnreachableError(Exception):
     """Ollama did not answer, or answered with an error (including 'model not found')."""
 
 
-class InvalidOutput(Exception):
+class InvalidOutputError(Exception):
     """Ollama answered, but not with exactly {"summary": <string>}."""
 
 
@@ -80,14 +80,14 @@ async def ask(http: httpx.AsyncClient, settings: Settings, system: str, user: st
     except httpx.TimeoutException:
         raise  # a slow model is reported as a timeout, not as unreachable
     except httpx.HTTPError as error:
-        raise ModelUnreachable(type(error).__name__) from error
+        raise ModelUnreachableError(type(error).__name__) from error
     if response.status_code != 200:
-        raise ModelUnreachable(f"HTTP {response.status_code}")
+        raise ModelUnreachableError(f"HTTP {response.status_code}")
     try:
         data = response.json()
         summary = _SummaryOnly.model_validate_json(data["message"]["content"]).summary
     except (ValueError, KeyError, TypeError) as error:
-        raise InvalidOutput from error
+        raise InvalidOutputError from error
     return Answer(summary, _timings(data))
 
 

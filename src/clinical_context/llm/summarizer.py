@@ -29,7 +29,7 @@ from ..config import Settings
 from ..packet.models import ClinicalContextPacket, SummaryBlock, SummaryReason
 from .cache import SummaryCache
 from .checks import Violation, check_summary
-from .ollama import InvalidOutput, ModelUnreachable, ask, request_options
+from .ollama import InvalidOutputError, ModelUnreachableError, ask, request_options
 from .prompt import build_prompt, with_correction
 
 logger = logging.getLogger("clinical_context.llm.summarizer")
@@ -93,7 +93,7 @@ async def _generate(
                 prompt = user if problem is None else with_correction(user, problem)
                 try:
                     answer = await ask(http, settings, system, prompt)
-                except InvalidOutput:
+                except InvalidOutputError:
                     problem = Violation.INVALID_JSON
                     continue
                 timings = answer.timings
@@ -113,7 +113,7 @@ async def _generate(
                 block = _unavailable(settings, reason)
     except (httpx.TimeoutException, TimeoutError):
         block = _unavailable(settings, "timeout")
-    except ModelUnreachable as error:
+    except ModelUnreachableError as error:
         logger.warning("model unreachable: %s", error)
         block = _unavailable(settings, "model_unreachable")
 
