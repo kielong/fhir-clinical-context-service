@@ -1,0 +1,91 @@
+{
+  "patient_id": "2fa15bc7-8866-461a-9000-f739e425860a",
+  "patient": {
+    "fhir_id": "1000",
+    "display_name": "Aaron697 Brekke496",
+    "birth_date": "1945-12-10",
+    "age_years": 73,
+    "gender": "male",
+    "deceased": false,
+    "deceased_date": null,
+    "source": "Patient/1000"
+  },
+  "conditions": [
+    {
+      "display": "Anemia (disorder)",
+      "clinical_status": "active",
+      "onset_date": "1987-12-21",
+      "source": "Condition/1017"
+    },
+    {
+      "display": "Prediabetes",
+      "clinical_status": "active",
+      "onset_date": "1987-12-21",
+      "source": "Condition/1016"
+    },
+    {
+      "display": "Body mass index 30+ - obesity (finding)",
+      "clinical_status": "active",
+      "onset_date": "1977-02-21",
+      "source": "Condition/1012"
+    },
+    {
+      "display": "Cardiac Arrest",
+      "clinical_status": "active",
+      "onset_date": "1965-11-15",
+      "source": "Condition/1004"
+    },
+    {
+      "display": "History of cardiac arrest (situation)",
+      "clinical_status": "active",
+      "onset_date": "1965-11-15",
+      "source": "Condition/1005"
+    }
+  ],
+  "medications": [],
+  "allergies": [],
+  "summary": {
+    "text": "The patient is recorded as active with anemia, prediabetes, and obesity. He has a history of cardiac arrest and previous cardiac arrest events.",
+    "status": "generated",
+    "model": "gemma3:4b",
+    "reason": null
+  },
+  "missing": [
+    {
+      "code": "empty_section",
+      "section": "medications",
+      "detail": "No active or on-hold MedicationRequest resources; 1 other on file was excluded as not active"
+    },
+    {
+      "code": "empty_section",
+      "section": "allergies",
+      "detail": "No AllergyIntolerance resources on file"
+    }
+  ],
+  "meta": {
+    "as_of": "2019-09-16",
+    "as_of_source": "config",
+    "generated_at": "2026-09-21T01:15:41.359867Z",
+    "included": {
+      "conditions": "clinicalStatus in active, recurrence, relapse; newest onset first; max 25",
+      "medications": "status in active, on-hold; newest authoredOn first; max 25",
+      "allergies": "clinicalStatus active or unrecorded; newest recordedDate first; max 25"
+    },
+    "excluded_counts": {
+      "conditions": 5,
+      "medications": 1,
+      "allergies": 0
+    },
+    "invalid_counts": {
+      "conditions": 0,
+      "medications": 0,
+      "allergies": 0
+    },
+    "truncated": false,
+    "timings_ms": {
+      "fhir": 65,
+      "llm": 0,
+      "total": 67
+    }
+  }
+}

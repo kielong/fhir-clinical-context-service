@@ -1,0 +1,17 @@
+%%{init: {"flowchart": {"nodeSpacing": 16, "rankSpacing": 20, "padding": 8}, "themeVariables": {"fontSize": "13px"}}}%%
+flowchart LR
+    R(["Reviewer"]) --> API["FastAPI"] --> FHIR[("HAPI FHIR")]
+    FHIR --> FACTS["<b>Facts</b><br/>built in code,<br/>each with a source"]
+    FACTS --> LLM["<b>Summary</b><br/>Ollama<br/>gemma3:4b"]
+    LLM --> CHK["<b>Checks</b><br/>retry once,<br/>else withheld"]
+    CHK --> OUT(["<b>Packet</b><br/>facts always,<br/>summary if it passes"])
+    FACTS -.-> OUT
+
+    classDef io fill:#f3f4f6,stroke:#6b7280,color:#111827
+    classDef facts fill:#e0f0ff,stroke:#2563eb,color:#0b1f3a
+    classDef model fill:#ffedd5,stroke:#ea580c,color:#3b1d06
+    classDef out fill:#dcfce7,stroke:#16a34a,color:#052e16
+    class R,API,FHIR io
+    class FACTS facts
+    class LLM,CHK model
+    class OUT out

@@ -1,0 +1,214 @@
+{
+  "patient_id": "5919de03-6363-41a7-b251-f5be75149adc",
+  "patient": {
+    "fhir_id": "22089",
+    "display_name": "Jose871 Williamson769",
+    "birth_date": "1924-06-30",
+    "age_years": 93,
+    "gender": "male",
+    "deceased": true,
+    "deceased_date": "2017-07-31",
+    "source": "Patient/22089"
+  },
+  "conditions": [
+    {
+      "display": "Alzheimer's disease (disorder)",
+      "clinical_status": "active",
+      "onset_date": "2014-02-09",
+      "source": "Condition/22389"
+    },
+    {
+      "display": "Anemia (disorder)",
+      "clinical_status": "active",
+      "onset_date": "2012-06-20",
+      "source": "Condition/22283"
+    },
+    {
+      "display": "Chronic congestive heart failure (disorder)",
+      "clinical_status": "active",
+      "onset_date": "2012-06-20",
+      "source": "Condition/22282"
+    },
+    {
+      "display": "Osteoporosis (disorder)",
+      "clinical_status": "active",
+      "onset_date": "2004-12-19",
+      "source": "Condition/22155"
+    },
+    {
+      "display": "Atrial Fibrillation",
+      "clinical_status": "active",
+      "onset_date": "2001-12-02",
+      "source": "Condition/22145"
+    },
+    {
+      "display": "Stroke",
+      "clinical_status": "active",
+      "onset_date": "1989-07-24",
+      "source": "Condition/22126"
+    },
+    {
+      "display": "Carcinoma in situ of prostate (disorder)",
+      "clinical_status": "active",
+      "onset_date": "1985-08-27",
+      "source": "Condition/22116"
+    },
+    {
+      "display": "Neoplasm of prostate",
+      "clinical_status": "active",
+      "onset_date": "1985-08-27",
+      "source": "Condition/22115"
+    },
+    {
+      "display": "Coronary Heart Disease",
+      "clinical_status": "active",
+      "onset_date": "1982-08-16",
+      "source": "Condition/22109"
+    },
+    {
+      "display": "Body mass index 30+ - obesity (finding)",
+      "clinical_status": "active",
+      "onset_date": "1958-09-15",
+      "source": "Condition/22105"
+    }
+  ],
+  "medications": [
+    {
+      "display": "10 ML Furosemide 10 MG/ML Injection",
+      "status": "active",
+      "authored_on": "2017-06-15",
+      "source": "MedicationRequest/22542"
+    },
+    {
+      "display": "24 HR Donepezil hydrochloride 10 MG / Memantine hydrochloride 28 MG Extended Release Oral Capsule",
+      "status": "active",
+      "authored_on": "2015-01-05",
+      "source": "MedicationRequest/22413"
+    },
+    {
+      "display": "24 HR metoprolol succinate 100 MG Extended Release Oral Tablet [Toprol]",
+      "status": "active",
+      "authored_on": "2012-07-11",
+      "source": "MedicationRequest/22319"
+    },
+    {
+      "display": "Lasix 40mg",
+      "status": "active",
+      "authored_on": "2012-07-11",
+      "source": "MedicationRequest/22321"
+    },
+    {
+      "display": "Alendronic acid 10 MG Oral Tablet",
+      "status": "active",
+      "authored_on": "2004-12-19",
+      "source": "MedicationRequest/22156"
+    },
+    {
+      "display": "Digoxin 0.125 MG Oral Tablet",
+      "status": "active",
+      "authored_on": "2001-12-02",
+      "source": "MedicationRequest/22150"
+    },
+    {
+      "display": "Verapamil Hydrochloride 40 MG",
+      "status": "active",
+      "authored_on": "2001-12-02",
+      "source": "MedicationRequest/22148"
+    },
+    {
+      "display": "Warfarin Sodium 5 MG Oral Tablet",
+      "status": "active",
+      "authored_on": "2001-12-02",
+      "source": "MedicationRequest/22146"
+    },
+    {
+      "display": "Clopidogrel 75 MG Oral Tablet",
+      "status": "active",
+      "authored_on": "1997-11-09",
+      "source": "MedicationRequest/22140"
+    },
+    {
+      "display": "Amlodipine 5 MG Oral Tablet",
+      "status": "active",
+      "authored_on": "1994-10-24",
+      "source": "MedicationRequest/22135"
+    },
+    {
+      "display": "Simvastatin 20 MG Oral Tablet",
+      "status": "active",
+      "authored_on": "1991-10-07",
+      "source": "MedicationRequest/22130"
+    },
+    {
+      "display": "0.25 ML Leuprolide Acetate 30 MG/ML Prefilled Syringe",
+      "status": "active",
+      "authored_on": "1985-08-27",
+      "source": "MedicationRequest/22119"
+    },
+    {
+      "display": "1 ML DOCEtaxel 20 MG/ML Injection",
+      "status": "active",
+      "authored_on": "1985-08-27",
+      "source": "MedicationRequest/22117"
+    },
+    {
+      "display": "Nitroglycerin 0.4 MG/ACTUAT Mucosal Spray",
+      "status": "active",
+      "authored_on": "1982-08-16",
+      "source": "MedicationRequest/22110"
+    }
+  ],
+  "allergies": [
+    {
+      "display": "Allergy to mould",
+      "clinical_status": "active",
+      "criticality": "low",
+      "source": "AllergyIntolerance/22098"
+    },
+    {
+      "display": "Allergy to peanuts",
+      "clinical_status": "active",
+      "criticality": "low",
+      "source": "AllergyIntolerance/22099"
+    }
+  ],
+  "summary": {
+    "text": "The deceased 93-year-old male was recorded as having active conditions including Alzheimer's disease, chronic congestive heart failure, and atrial fibrillation. He was also recorded as taking multiple medications such as furosemide, donepezil, and warfarin.",
+    "status": "generated",
+    "model": "gemma3:4b",
+    "reason": null
+  },
+  "missing": [
+    {
+      "code": "patient_deceased",
+      "section": "patient",
+      "detail": "Patient deceased 2017-07-31; statuses below are the last recorded and are not current"
+    }
+  ],
+  "meta": {
+    "as_of": "2019-09-16",
+    "as_of_source": "config",
+    "generated_at": "2026-09-21T01:15:41.386023Z",
+    "included": {
+      "conditions": "clinicalStatus in active, recurrence, relapse; newest onset first; max 25",
+      "medications": "status in active, on-hold; newest authoredOn first; max 25",
+      "allergies": "clinicalStatus active or unrecorded; newest recordedDate first; max 25"
+    },
+    "excluded_counts": {
+      "conditions": 6,
+      "medications": 5,
+      "allergies": 0
+    },
+    "invalid_counts": {
+      "conditions": 0,
+      "medications": 0,
+      "allergies": 0
+    },
+    "truncated": false,
+    "timings_ms": {
+      "fhir": 19,
+      "llm": 0,
+      "total": 19
+    }
+  }
+}

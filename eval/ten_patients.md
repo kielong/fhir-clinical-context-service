@@ -138,6 +138,20 @@ author of a system is not an independent judge.** The words behind every mark ar
 directory so anyone can check them: `bakeoff.json`, `ten_before.txt`, `ten_after.txt`,
 `batch.jsonl` (measurements, never the summaries' words).
 
+**Second pass (Claude Code, at Kiel's request).** Every mark was re-read against the raw text and
+the facts, and cross-checked mechanically (which conditions, medications and allergies each summary
+names, whether it says "deceased", whether it hedges a partial list). No mark changed. The
+mechanical check agrees in direction but is blunt: it missed Floyd's omission (the hedge "such as"
+covers his medications, not his conditions) and over-counted Beatriz's allergies (the word
+"allergy" matches every entry), so the marks rest on reading. Three calls are close: Aaron's
+"previous cardiac arrest events" (plural; kept fair), Beatriz's "a low criticality allergy to bee
+venom" (kept unfair as `invented`; a lenient reading calls it an allergy omission, which the
+rubric does not count, and she would be fair), and Floyd (kept unfair, since the hedge is about
+medications). Taking those and whether dropped allergies count either way, the "after" tally is
+anywhere from **4 to 7 of 10, and the bar of 9 is missed under every reading.** This is still the
+same author checking its own work: it is not independent, and Kiel has not yet read the summaries
+himself.
+
 The rubric above was not changed after any result was seen. Where it turned out to be silent or
 blunt, that is said below instead of being edited away.
 

@@ -1,0 +1,65 @@
+{
+  "patient_id": "e2129449-9c68-4155-a826-e22091aa4742",
+  "patient": {
+    "fhir_id": "22693",
+    "display_name": "Alicia629 Walter473",
+    "birth_date": "2017-08-29",
+    "age_years": 2,
+    "gender": "female",
+    "deceased": false,
+    "deceased_date": null,
+    "source": "Patient/22693"
+  },
+  "conditions": [],
+  "medications": [],
+  "allergies": [],
+  "summary": {
+    "text": "The patient is recorded as active with no conditions or allergies. There are no medications recorded in the patient's chart.",
+    "status": "generated",
+    "model": "gemma3:4b",
+    "reason": null
+  },
+  "missing": [
+    {
+      "code": "empty_section",
+      "section": "conditions",
+      "detail": "No Condition resources on file"
+    },
+    {
+      "code": "empty_section",
+      "section": "medications",
+      "detail": "No MedicationRequest resources on file"
+    },
+    {
+      "code": "empty_section",
+      "section": "allergies",
+      "detail": "No AllergyIntolerance resources on file"
+    }
+  ],
+  "meta": {
+    "as_of": "2019-09-16",
+    "as_of_source": "config",
+    "generated_at": "2026-09-21T01:15:41.404166Z",
+    "included": {
+      "conditions": "clinicalStatus in active, recurrence, relapse; newest onset first; max 25",
+      "medications": "status in active, on-hold; newest authoredOn first; max 25",
+      "allergies": "clinicalStatus active or unrecorded; newest recordedDate first; max 25"
+    },
+    "excluded_counts": {
+      "conditions": 0,
+      "medications": 0,
+      "allergies": 0
+    },
+    "invalid_counts": {
+      "conditions": 0,
+      "medications": 0,
+      "allergies": 0
+    },
+    "truncated": false,
+    "timings_ms": {
+      "fhir": 13,
+      "llm": 0,
+      "total": 13
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "patient_id": "9da0dcfc-05e3-4e8e-95ff-b04b56f748be",
+  "patient": {
+    "fhir_id": "19807",
+    "display_name": "Shelly431 Corwin846",
+    "birth_date": "1935-01-12",
+    "age_years": 84,
+    "gender": "female",
+    "deceased": false,
+    "deceased_date": null,
+    "source": "Patient/19807"
+  },
+  "conditions": [
+    {
+      "display": "Acute bacterial sinusitis (disorder)",
+      "clinical_status": "active",
+      "onset_date": "2019-09-05",
+      "source": "Condition/22083"
+    },
+    {
+      "display": "Chronic kidney disease stage 1 (disorder)",
+      "clinical_status": "active",
+      "onset_date": "2016-07-09",
+      "source": "Condition/20914"
+    },
+    {
+      "display": "Diabetic renal disease (disorder)",
+      "clinical_status": "active",
+      "onset_date": "2016-07-09",
+      "source": "Condition/20915"
+    }
+  ],
+  "medications": [
+    {
+      "display": "insulin human, isophane 70 UNT/ML / Regular Insulin, Human 30 UNT/ML Injectable Suspension [Humulin]",
+      "status": "active",
+      "authored_on": "2016-07-23",
+      "source": "MedicationRequest/21024"
+    },
+    {
+      "display": "Galantamine 4 MG Oral Tablet",
+      "status": "active",
+      "authored_on": "2013-09-21",
+      "source": "MedicationRequest/20401"
+    },
+    {
+      "display": "10 ML oxaliplatin 5 MG/ML Injection",
+      "status": "active",
+      "authored_on": "2011-04-30",
+      "source": "MedicationRequest/20024"
+    }
+  ],
+  "allergies": [],
+  "summary": {
+    "text": "The patient is recorded as active with acute bacterial sinusitis, chronic kidney disease stage 1, and diabetic renal disease. She is taking insulin human, isophane 70 UNT/ML, Regular Insulin, Human 30 UNT/ML, Galantamine 4 MG Oral Tablet, and 10 ML oxaliplatin 5 MG/ML Injection.",
+    "status": "generated",
+    "model": "gemma3:4b",
+    "reason": null
+  },
+  "missing": [
+    {
+      "code": "truncated_section",
+      "section": "conditions",
+      "detail": "showing 3 of 24 included Condition resources, newest first"
+    },
+    {
+      "code": "truncated_section",
+      "section": "medications",
+      "detail": "showing 3 of 7 included MedicationRequest resources, newest first"
+    },
+    {
+      "code": "empty_section",
+      "section": "allergies",
+      "detail": "No AllergyIntolerance resources on file"
+    }
+  ],
+  "meta": {
+    "as_of": "2019-09-16",
+    "as_of_source": "config",
+    "generated_at": "2026-09-21T01:15:42.972619Z",
+    "included": {
+      "conditions": "clinicalStatus in active, recurrence, relapse; newest onset first; max 3",
+      "medications": "status in active, on-hold; newest authoredOn first; max 3",
+      "allergies": "clinicalStatus active or unrecorded; newest recordedDate first; max 3"
+    },
+    "excluded_counts": {
+      "conditions": 4,
+      "medications": 2,
+      "allergies": 0
+    },
+    "invalid_counts": {
+      "conditions": 0,
+      "medications": 0,
+      "allergies": 0
+    },
+    "truncated": true,
+    "timings_ms": {
+      "fhir": 27,
+      "llm": 28151,
+      "total": 28180
+    }
+  }
+}
