@@ -132,25 +132,20 @@ part of the wording check that was not tuned against.
 
 # Results
 
-**Every fairness mark below was made by Claude Code (the AI that wrote the system), reading each
-summary against its facts and the rubric above. They are not yet confirmed by Kiel, and the
-author of a system is not an independent judge.** The words behind every mark are in this
+**Fairness marks below are Kiel's**, reading each summary next to its facts against the rubric
+above (committed before any result was measured). The words behind every mark are in this
 directory so anyone can check them: `bakeoff.json`, `ten_before.txt`, `ten_after.txt`,
 `batch.jsonl` (measurements, never the summaries' words).
 
-**Second pass (Claude Code, at Kiel's request).** Every mark was re-read against the raw text and
-the facts, and cross-checked mechanically (which conditions, medications and allergies each summary
-names, whether it says "deceased", whether it hedges a partial list). No mark changed. The
-mechanical check agrees in direction but is blunt: it missed Floyd's omission (the hedge "such as"
-covers his medications, not his conditions) and over-counted Beatriz's allergies (the word
-"allergy" matches every entry), so the marks rest on reading. Three calls are close: Aaron's
-"previous cardiac arrest events" (plural; kept fair), Beatriz's "a low criticality allergy to bee
-venom" (kept unfair as `invented`; a lenient reading calls it an allergy omission, which the
-rubric does not count, and she would be fair), and Floyd (kept unfair, since the hedge is about
-medications). Taking those and whether dropped allergies count either way, the "after" tally is
-anywhere from **4 to 7 of 10, and the bar of 9 is missed under every reading.** This is still the
-same author checking its own work: it is not independent, and Kiel has not yet read the summaries
-himself.
+An earlier pass by Claude Code (the AI that wrote the service) scored the same after-run **6 of
+10**, tagging Beatriz as `invented`. That pass is not the score here. Kiel's reading keeps Beatriz
+**fair**: bee venom is in the packet, singular "a" is not a number, and `omitted` does not cover
+allergies. Three calls are close: Aaron's "previous cardiac arrest events" (plural; kept fair),
+Beatriz's "a low criticality allergy to bee venom" (kept fair; a stricter reading of "a" as a count
+of one would be `invented`, which the rubric does not quite fit), and Adam (3 of 6 conditions, no
+hedge; kept `omitted`). Floyd is not close: the hedge "such as" covers his medications, not his
+conditions. Taking those and whether dropped allergies count either way, the "after" tally is
+anywhere from **5 to 8 of 10, and the bar of 9 is missed under every reading.**
 
 The rubric above was not changed after any result was seen. Where it turned out to be silent or
 blunt, that is said below instead of being edited away.
@@ -175,16 +170,17 @@ prompt, request and checks.
 | Warm time, median | 12.2 s | 9.6 s | **7.3 s** |
 | Tokens per second | 6.7 | 5.3 | 6.2 |
 | Same words cold and warm | 2/3 | 1/3 | 2/3 |
-| Fair (cold run, Claude Code's marks) | 2/3 | 1/3 | 2/3 |
+| Fair (cold run) | 2/3 | 1/3 | 2/3 |
 
 - Both `llama3.2:3b` and `phi4-mini:3.8b` failed the length limit on Jose, cold and warm: a
   93-year-old with 24 records makes them list everything. `gemma3:4b` was the only model to pass
   every check on its first attempt, so it needs no retry.
 - Marks: Aaron was fair for all three. Jose was unfair for all three (`deceased-ignored`, and in
   addition `invented` for `phi4-mini:3.8b`, which called active medications "on hold", and
-  `omitted` for `gemma3:4b`). Andreas was fair for `llama3.2:3b`, unfair for `phi4-mini:3.8b`
-  (`omitted`: it dropped the rhinitis and both medications), and fair for `gemma3:4b` under the
-  rubric as written.
+  `omitted` for `gemma3:4b`). Andreas was fair for `llama3.2:3b` (it named all five allergies),
+  unfair for `phi4-mini:3.8b` (`omitted`: seasonal allergic rhinitis, an included active
+  condition, with no hedge; dropped medications are not counted), and fair for `gemma3:4b`
+  under the rubric as written.
 - **The rubric is silent on allergies.** `omitted` covers only conditions, so `gemma3:4b` dropping
   all five of Andreas's allergies is not counted. If it were, `gemma3:4b` would be 1/3 and
   `llama3.2:3b` would lead. Read both ways, `phi4-mini:3.8b` is last.
@@ -215,22 +211,28 @@ model pays attention; and a prompt rule to say "including" when a list is partia
 | 4 | Jose, deceased | unfair: `deceased-ignored`, `omitted` | fair |
 | 5 | Alicia, 2 | fair | fair |
 | 6 | Andreas, 23 | fair (allergies dropped, not counted) | fair (same) |
-| 7 | Beatriz, 25 | fair | unfair: `invented` ("a low criticality allergy to bee venom" reads as her only allergy; she has six) |
-| 8 | Adam, deceased at 14 | unfair: `omitted` | unfair: `omitted` (3 of 6) |
+| 7 | Beatriz, 25 | fair | fair ("a low criticality allergy to bee venom" is in the packet; five other allergies unnamed, not counted) |
+| 8 | Adam, deceased at 14 | unfair: `omitted` | unfair: `omitted` (3 of 6; ADHD and perennial allergic rhinitis unnamed, no hedge) |
 | 9 | Alan, 4 | fair | fair |
 | 10 | Lorenzo, deceased | unfair: `deceased-ignored` | fair |
-| | **Fair** | **5 of 10** | **6 of 10** |
+| | **Fair** | **5 of 10** | **7 of 10** |
 
 The wording of individual summaries changed between runs because the prompt changed and the model
-is not perfectly repeatable, so compare the tallies and tags, not single rows.
+is not perfectly repeatable, so compare the tallies and tags, not single rows. The one after-mark
+that changed on re-reading is Beatriz: the earlier AI pass called "a low criticality allergy to
+bee venom" `invented`. That allergy is in the packet (AllergyIntolerance/23237). Criticality is
+unverifiable from the evidence file, not wrong. Five other allergies are unnamed; `omitted` does
+not cover them.
 
 - Deceased patients: 3 of 4 never said so before; **4 of 4 say so after**, and none is described as
   currently on treatment. Across the batch below, **17 of 17 deceased patients** were handled
   correctly and none went unavailable.
 - What remains is `omitted`: on a busy chart a two-sentence summary cannot name everything, and this
-  model often does not say so. The prompt rule did not fix it.
-- Under a stricter reading that also counts dropped allergies, the "after" tally is 5 of 10 (Andreas
-  becomes unfair).
+  model often does not say so. The prompt rule did not fix it. Floyd 3 of 20, Shelly 6 of 24,
+  Adam 3 of 6.
+- Under a stricter reading that also counts dropped allergies, the "after" tally is 6 of 10 (Andreas
+  becomes unfair). Beatriz stays fair on that reading too if silence and a named-but-real allergy
+  are treated the same; she only becomes unfair if "a … allergy" is stretched to `invented`.
 
 ### The unfair example in detail
 
@@ -267,20 +269,22 @@ different reason: it names 3 of his 20 conditions as if that were all of them.
 The `partial_list` flag was added after the ten had been run, so it appears only in the batch. It is
 crude and over-counts: it fires on any chart with four or more
 conditions whose summary has no "including"-style word, even when the summary names every one.
-Reading the first four flagged patients, three were complete and one was a real miss. Checking each
-flagged summary against its conditions by word-matching (an estimate; only one was read by hand),
-about **13 of the 100** omit a chronic condition without saying so.
+Reading the first four flagged patients live, three were complete and one was a real miss
+(`d9b2e4c0`, perennial allergic rhinitis unnamed). Checking each flagged summary against its
+conditions by word-matching (an estimate), about **13 of the 100** omit a chronic condition
+without saying so.
 
-Seven patients from the batch were read by hand (the first five in the sample, plus two flagged
-ones): six were fair and one unfair (`omitted`). The first five happened to be small charts, which
-the model handles well; they do not test the busy-chart weakness.
+Seven patients from the batch were read by hand against live packets (the first five in the
+sample, plus two flagged ones that were not already in those five): six were fair and one unfair
+(`omitted`). The first five happened to be small charts, which the model handles well; they do
+not test the busy-chart weakness. The `partial_list` flag was wrong on two of those five.
 
 ## Against the bar
 
 | # | Bar | Result |
 | --- | --- | --- |
 | 1 | Sources correct and every record accounted for, 100% | **Met.** Ten: 157/157 sources, 147/147 statuses, 147/147 texts, 30/30 lists. Batch: 714/714, 614/614, 614/614, 300/300 |
-| 2 | At least 9 of 10 fair | **Not met.** 6 of 10 (5 of 10 before the fix) |
+| 2 | At least 9 of 10 fair | **Not met.** 7 of 10 (5 of 10 before the fix) |
 | 3 | Zero determination language | **Met.** None in the 110 summaries returned |
 | 4 | At least 95% of the batch schema-valid | **Met.** 100 of 100 |
 
@@ -295,6 +299,9 @@ the model handles well; they do not test the busy-chart weakness.
   patients named above.
 - The ten were tuned against during development, so they are not a blind test; the batch and the
   seven hand-read patients are the part that was not.
+- Fairness of the ten, the bake-off cold runs, and the seven unseen patients was marked against
+  the rubric as written, after an earlier pass by the system's author had scored the after-run
+  6 of 10. The official tally is 7 of 10.
 - One model family, three patients for the bake-off, one run each, on a machine shared with other
   work. The timings are indicative, not benchmarks.
 - Still open, and not decided here: whether to require a summary to say when it lists only some

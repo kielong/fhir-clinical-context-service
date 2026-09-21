@@ -1,5 +1,5 @@
 <!-- ORIGIN: AI — drafted by Claude Code from the measured results and the decisions recorded in the
-     code comments; the decisions are Kiel's, and Kiel is to review and put it in their own voice. -->
+     code comments; the decisions and fairness marks are Kiel's. -->
 
 # Clinical Context Packet Service
 
@@ -89,11 +89,9 @@ the model, the facts arrive unchanged. (Diagram source: [`docs/data-flow.mmd`](d
 
 **How it was checked.** The standard (what "fair" means, five tags for a miss, the acceptance bar)
 was written and committed before any result was measured, and was not changed afterwards. Sources
-were checked by script, straight against HAPI, independently of the service. The **fairness marks
-were made by Claude Code, the AI that wrote the service**, and re-checked by it in a second pass at
-the author's request. That is still the same judge checking its own work, so the marks are not
-independent, and the author has not yet read the summaries independently. The words behind every
-mark are saved in [`eval/`](eval/); the full write-up is [`eval/ten_patients.md`](eval/ten_patients.md).
+were checked by script, straight against HAPI, independently of the service. **I read each of the
+ten summaries next to its facts and marked it against that standard.** The words behind every mark
+are saved in [`eval/`](eval/); the full write-up is [`eval/ten_patients.md`](eval/ten_patients.md).
 
 **Ten patients read one by one** (young and old, sparse and busy, living and deceased, an empty
 chart, polypharmacy, inactive records):
@@ -101,26 +99,29 @@ chart, polypharmacy, inactive records):
 - **Sources are sound:** all 157 cited sources exist and belong to the right patient, all 147
   statuses match, all 147 names match the record, and every record HAPI holds for the ten is
   accounted for.
-- **6 of 10 summaries fair; the bar was 9, so it was missed.** The first read scored 5 of 10. Three
-  calls are close (and it matters whether a dropped allergy counts), so the honest range is 4 to 7;
-  the bar is missed under every reading.
+- **7 of 10 summaries fair; the bar was 9, so it was missed.** The first read scored 5 of 10. Three
+  calls are close (Aaron's plural "events", Beatriz naming one of six allergies, Adam's 3 of 6
+  conditions with no hedge), so the honest range is 5 to 8; the bar is missed under every reading.
 - **The first failure was a real bug.** Three of four deceased patients were never called deceased.
   Floyd, deceased at 95 with 1,275 medication requests, was summarized as "recorded as active with
   ... medications such as Furosemide ... and insulin", which reads as a living patient on
   treatment. Every word copied the record faithfully, so no check on the words could catch it; it
   took a rule about the patient. After the fix all four deceased patients say so.
 - **What remains:** on a long chart the model names a few conditions as if they were all of them
-  (Floyd: 3 of 20), and once implied one allergy where there were six.
+  (Floyd: 3 of 20, Shelly: 6 of 24, Adam: 3 of 6) and does not say "including." Dropped allergies
+  are not a miss under the rule as written (Beatriz named one of six; Andreas named none).
 
 **A batch of 100 patients nobody had looked at:** 100 of 100 summaries generated and schema-valid;
 714 of 714 sources found and correct; all 300 lists accounted for; 17 of 17 deceased patients
-handled correctly; time until a summary was ready 13.0 s median, 21.1 s at p95. Roughly 13 of the
-100 leave out a chronic condition without saying so (an estimate; only one was read by hand).
+handled correctly; time until a summary was ready 13.0 s median, 21.1 s at p95. Seven of those
+patients were read by hand (none of the ten): 6 of 7 fair, one omitted. Roughly 13 of the 100
+leave out a chronic condition without saying so (an estimate from word-matching; the hand-read
+seven found the script's `partial_list` flag over-counts).
 
 **Choosing the model.** Three patients, each model cold (loaded from nothing) then warm, using the
 service's own prompt and checks:
 
-| | passes the checks first try | cold / warm | tokens per second | fair (AI's marks) |
+| | passes the checks first try | cold / warm | tokens per second | fair (cold) |
 | --- | --- | --- | --- | --- |
 | llama3.2:3b | 4 of 6 | 27.1 s / 12.2 s | 6.7 | 2 of 3 |
 | phi4-mini:3.8b | 4 of 6 | 21.4 s / 9.6 s | 5.3 | 1 of 3 |
@@ -140,9 +141,8 @@ slower than a quiet machine would give.
    (for example by putting each list's size in the prompt and checking that a partial list says
    so), apply the same to allergies, and re-measure on the 100 plus more read by hand. *Why:* it is
    the one bar that failed.
-2. **Independent review.** Have people other than the author mark the summaries, and add a check
-   that every claim traces to a listed fact. *Why:* the current marks come from the system's own
-   author.
+2. **A check that every claim traces to a listed fact.** *Why:* the automatic checks catch
+   "none recorded" and stray digits, not a partial condition list that reads as complete.
 3. **Scope the packet to a request.** Redefine `missing` as the documentation still needed for
    *this* authorization request, not just what the chart lacks. *Why:* that is what a reviewer
    actually asks.
