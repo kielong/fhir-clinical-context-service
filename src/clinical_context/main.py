@@ -15,7 +15,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from .config import get_settings
-from .fhir_client import AmbiguousPatient, FhirUnavailable, PatientNotFound
+from .fhir.client import AmbiguousPatient, FhirUnavailable, PatientNotFound
 from .llm import SummaryCache, warm_up
 from .privacy import RedactPatientIds, error_location, patient_hash
 from .routers import health, packet, reviewer

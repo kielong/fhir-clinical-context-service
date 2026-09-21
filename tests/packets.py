@@ -6,8 +6,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 import synthetic as syn
-from clinical_context.assembly import assemble_packet
-from clinical_context.models import ClinicalContextPacket
+from clinical_context.packet.assembly import assemble_packet
+from clinical_context.packet.models import ClinicalContextPacket
 
 FIXTURES = Path(__file__).parent / "fixtures" / "real"
 AS_OF = date(2019, 9, 16)

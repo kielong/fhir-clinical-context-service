@@ -12,7 +12,7 @@ import pytest
 
 import synthetic as syn
 from clinical_context.config import Settings
-from clinical_context.fhir_client import (
+from clinical_context.fhir.client import (
     AmbiguousPatient,
     FhirClient,
     FhirUnavailable,

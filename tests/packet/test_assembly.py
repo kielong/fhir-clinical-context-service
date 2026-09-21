@@ -7,12 +7,11 @@ hand-built records (tests/synthetic.py) for rules the real sample never triggers
 
 import json
 from datetime import UTC, date, datetime
-from pathlib import Path
 
 import pytest
 
 import synthetic as syn
-from clinical_context.assembly import (
+from clinical_context.packet.assembly import (
     assemble_packet,
     code_of,
     condition_onset,
@@ -21,9 +20,9 @@ from clinical_context.assembly import (
     patient_age_years,
     patient_display_name,
 )
-from clinical_context.models import ClinicalContextPacket
+from clinical_context.packet.models import ClinicalContextPacket
+from packets import FIXTURES
 
-FIXTURES = Path(__file__).parent / "fixtures" / "real"
 AS_OF = date(2019, 9, 16)  # the Synthea sample is frozen at this date
 GENERATED_AT = datetime(2026, 9, 20, 12, 0, tzinfo=UTC)
 

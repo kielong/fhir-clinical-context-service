@@ -30,7 +30,7 @@ from urllib.parse import quote, urlsplit, urlunsplit
 
 import httpx
 
-from .config import Settings
+from ..config import Settings
 
 REQUEST_HEADERS = {"Accept": "application/fhir+json", "Cache-Control": "no-cache"}
 NOT_FOUND_BY_ID = frozenset({400, 404, 410})

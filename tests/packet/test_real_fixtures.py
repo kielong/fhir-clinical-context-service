@@ -7,13 +7,11 @@ sample, trimmed wrongly), assembly tests built on it would silently test the wro
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
+from packets import FIXTURES
 from synthea_data import SYNTHEA_IDENTIFIER_SYSTEM
-
-FIXTURE_DIR = Path(__file__).parent / "fixtures" / "real"
 
 # uuid: (conditions total, conditions active, meds total in bundle, meds active,
 #        allergies active, allergies inactive)
@@ -33,7 +31,7 @@ GOLDEN = {
 
 def _load_all() -> dict[str, dict]:
     fixtures = {}
-    for path in sorted(FIXTURE_DIR.glob("*.json")):
+    for path in sorted(FIXTURES.glob("*.json")):
         data = json.loads(path.read_text())
         fixtures[data["_meta"]["synthea_uuid"]] = data
     return fixtures

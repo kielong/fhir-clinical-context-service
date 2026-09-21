@@ -8,7 +8,6 @@ logging); only HAPI is faked.
 import json
 import logging
 from datetime import UTC, date, datetime
-from pathlib import Path
 from urllib.parse import quote
 
 import httpx
@@ -20,12 +19,12 @@ from clinical_context.config import Settings, get_settings
 from clinical_context.dependencies import get_fhir_client, get_summarizer
 from clinical_context.llm.summarizer import SummaryResult
 from clinical_context.main import app
-from clinical_context.models import ClinicalContextPacket, SummaryBlock
+from clinical_context.packet.models import ClinicalContextPacket, SummaryBlock
 from clinical_context.privacy import patient_hash
 from fhir_mocks import BASE, bundle, operation_outcome
 from ollama_mocks import CHAT, GOOD, OLLAMA, reply
+from packets import FIXTURES
 
-FIXTURES = Path(__file__).parent / "fixtures" / "real"
 SYNTHEA_UUID = "2fa15bc7-8866-461a-9000-f739e425860a"  # the assignment's example patient
 PACKET = "/v1/patients/{}/clinical-context"
 

@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).parent.parent.parent
 AZURE = ROOT / "azure"
 BICEP = AZURE / "main.bicep"
 SCRIPTS = ["deploy.sh", "remote-setup.sh", "make-dump.sh", "teardown.sh"]

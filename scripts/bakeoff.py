@@ -32,7 +32,7 @@ from clinical_context.config import Settings
 from clinical_context.llm.checks import check_summary
 from clinical_context.llm.ollama import InvalidOutput, ModelUnreachable, ask
 from clinical_context.llm.prompt import build_prompt
-from clinical_context.models import ClinicalContextPacket
+from clinical_context.packet.models import ClinicalContextPacket
 
 DEFAULT_MODELS = ["llama3.2:3b", "phi4-mini:3.8b", "gemma3:4b"]
 # Aaron697 (sparse, a stale 1965 condition), Jose871 (deceased, polypharmacy), Andreas188 (an

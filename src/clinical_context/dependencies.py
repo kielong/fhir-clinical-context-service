@@ -13,9 +13,9 @@ import httpx
 from fastapi import Depends, Request
 
 from .config import Settings, get_settings
-from .fhir_client import FhirClient
+from .fhir.client import FhirClient
 from .llm import SummaryCache, SummaryResult, summarize
-from .models import ClinicalContextPacket
+from .packet.models import ClinicalContextPacket
 
 
 def get_http(request: Request) -> httpx.AsyncClient:

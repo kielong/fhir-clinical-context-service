@@ -42,4 +42,4 @@ jobs:
         run: shellcheck azure/*.sh
       - run: pip install -e '.[dev]'
       - name: Test the deployment rules (the compiled template is checked too now Bicep is installed)
-        run: pytest tests/test_azure.py -q
+        run: pytest tests/deploy -q

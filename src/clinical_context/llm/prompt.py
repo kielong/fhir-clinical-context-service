@@ -12,7 +12,7 @@ cache.py (the finished summary is remembered).
 import re
 import unicodedata
 
-from ..models import ClinicalContextPacket
+from ..packet.models import ClinicalContextPacket
 from .checks import REJECTION_REASONS
 
 SYSTEM_PROMPT = """\

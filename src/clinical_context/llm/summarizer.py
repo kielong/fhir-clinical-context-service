@@ -25,7 +25,7 @@ from functools import partial
 import httpx
 
 from ..config import Settings
-from ..models import ClinicalContextPacket, SummaryBlock, SummaryReason
+from ..packet.models import ClinicalContextPacket, SummaryBlock, SummaryReason
 from .cache import SummaryCache
 from .checks import Violation, check_summary
 from .ollama import InvalidOutput, ModelUnreachable, ask, request_options

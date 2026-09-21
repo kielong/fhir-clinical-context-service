@@ -12,11 +12,11 @@ from typing import Annotated, Literal
 from fastapi import APIRouter
 from fastapi import Path as PathParam
 
-from ..assembly import assemble_packet
 from ..config import Settings
 from ..dependencies import FhirDep, SettingsDep, SummarizerDep
 from ..llm import SummaryResult
-from ..models import ClinicalContextPacket, SummaryBlock, Timings
+from ..packet.assembly import assemble_packet
+from ..packet.models import ClinicalContextPacket, SummaryBlock, Timings
 from ..privacy import error_location, patient_hash
 
 router = APIRouter(prefix="/v1", tags=["clinical context"])

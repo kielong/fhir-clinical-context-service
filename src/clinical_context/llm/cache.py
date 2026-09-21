@@ -21,7 +21,7 @@ from collections import OrderedDict
 from collections.abc import Callable, Coroutine
 from typing import Any
 
-from ..models import SummaryBlock
+from ..packet.models import SummaryBlock
 from ..privacy import error_location
 
 logger = logging.getLogger("clinical_context.llm.cache")

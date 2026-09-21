@@ -11,7 +11,7 @@ are not a general fact-checker: other unfaithful wording is what the evaluation 
 import re
 from enum import StrEnum
 
-from ..models import ClinicalContextPacket
+from ..packet.models import ClinicalContextPacket
 
 MAX_SUMMARY_CHARS = 400
 
