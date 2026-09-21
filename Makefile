@@ -1,9 +1,12 @@
 # ORIGIN: AI — drafted by Claude Code, reviewed by Kiel
-.PHONY: install up down logs test lint format smoke
+.PHONY: install lock up down logs test lint format smoke
 
-install:  ## create .venv (Python 3.12) and install the project + dev tools
+install:  ## create .venv (Python 3.12) and install the locked versions + the project + dev tools
 	python3.12 -m venv .venv
-	.venv/bin/pip install -e '.[dev]'
+	.venv/bin/pip install -r requirements.lock -e '.[dev]'
+
+lock:  ## re-pin requirements.lock from pyproject.toml (run after changing its dependencies)
+	.venv/bin/pip-compile --strip-extras --quiet --output-file=requirements.lock pyproject.toml
 
 up:  ## build and start the whole stack in the background
 	docker compose up --build -d

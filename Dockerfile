@@ -7,10 +7,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# pyproject.toml declares readme = "README.md", so the build needs it too.
+# The exact versions that were tested come first, in a layer of their own: it is rebuilt only when
+# requirements.lock changes, not on every edit to the code. (Re-pin with `make lock`.)
+COPY requirements.lock ./
+RUN pip install -r requirements.lock
+
+# pyproject.toml declares readme = "README.md", so the build needs it too. The dependencies are
+# already installed, so nothing is resolved again here.
 COPY pyproject.toml README.md ./
 COPY src ./src
-RUN pip install .
+RUN pip install --no-deps .
 
 RUN useradd --create-home --uid 10001 appuser
 USER appuser
