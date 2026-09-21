@@ -21,3 +21,25 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest -q
+
+  azure-templates:
+    # Needs no Azure account or login: it only compiles, lints and tests the deployment files.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install the Bicep compiler
+        run: az bicep install
+      - name: Compile and lint the template
+        run: |
+          az bicep build --file azure/main.bicep --stdout > /dev/null
+          az bicep lint --file azure/main.bicep
+      - name: Lint the scripts
+        run: shellcheck azure/*.sh
+      - run: pip install -e '.[dev]'
+      - name: Test the deployment rules (the compiled template is checked too now Bicep is installed)
+        run: pytest tests/test_azure.py -q

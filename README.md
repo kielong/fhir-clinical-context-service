@@ -44,10 +44,26 @@ curl -s localhost:8000/v1/patients/2fa15bc7-8866-461a-9000-f739e425860a/clinical
   (a deceased patient, an empty chart, a truncated list) are in [`examples/`](examples/).
 - The first start is slow: HAPI is healthy after a minute or two and the model takes about 15–20 s
   to load. The seed can be stopped and restarted without duplicating anything.
-- `make test` runs 570 tests (no network or model needed); `make lint` checks style.
+- `make test` runs 606 tests (no network, model or Azure account needed); `make lint` checks style.
 - `AS_OF_DATE=2019-09-16` in `.env` matters: the Synthea sample is frozen at that date, so ages
   against today would be wrong (the example patient is 73 in the data, 80 today). Leave it unset
   against a real EHR.
+
+### Deploy to Azure (optional)
+
+The same compose runs on one Azure VM, with the data restored from a dump instead of loaded again:
+
+```bash
+azure/make-dump.sh                             # a 150 MB dump of the running local database
+azure/deploy.sh --my-ip <your-ip> --dry-run    # read every step first; it runs nothing
+azure/deploy.sh --my-ip <your-ip>              # needs `az login`; only that address can connect
+azure/teardown.sh                              # deletes everything it made
+```
+
+**It has never been deployed.** The template compiles and lints, 37 tests pin the safety rules, and
+the dump and restore were proven here (all 527,113 resources restore in 52 s and a second HAPI
+serves them correctly), but no Azure subscription was used. Steps, cost, what is exposed and why a
+deploy is manual rather than automatic on every push are in [`azure/README.md`](azure/README.md).
 
 ## How it works
 
@@ -94,6 +110,11 @@ the model, the facts arrive unchanged. (Diagram source: [`docs/data-flow.mmd`](d
   record; a source becomes a link only if it looks like `Type/id`; and the patient id goes in the
   URL fragment, which a browser never sends, because the server's access log prints query strings.
   *Rejected:* a front-end framework or build step, which would be more to explain than the page.
+- **Azure: the same compose on one VM, with the data as a dump.** Loading 1,180 bundles over HTTP
+  takes about nine minutes; the dump is 150 MB and restores in under one. Only the deployer's
+  address can connect, and there is no default for it. *Rejected:* a container service or managed
+  database, which would change what is being demonstrated, and deploying automatically on every push,
+  which would restore a database and start a paid VM for every README edit.
 - **HAPI is the state.** The seed asks HAPI before loading each patient, so an interrupted load
   resumes without duplicates; HAPI runs on Postgres so data survives a restart.
 - **No patient id in any log**: a keyed hash in app logs, the server's access log redacted, HAPI's
@@ -163,8 +184,8 @@ slower than a quiet machine would give.
 4. **A production shape on Azure.** SMART-on-FHIR or Entra ID auth, secrets in Key Vault, an audit
    trail of who looked at whom, and the model inside the payer's network so data never leaves it,
    then an Epic or Cerner connector (same R4 queries, different authentication). *Why:* none of it
-   can be added to a demo without redoing the trust boundary. Not done here: an Azure deployment,
-   and the CI workflow has not yet run on GitHub.
+   can be added to a demo without redoing the trust boundary. Not done here: the deployment
+   files exist but have never been run on Azure, and CI has not yet run on GitHub.
 5. **If summary latency hurts,** return the facts at once and the summary asynchronously, and try a
    larger model on a GPU, which the results suggest would help the omissions most.
 

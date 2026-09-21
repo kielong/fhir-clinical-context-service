@@ -12,3 +12,5 @@ __pycache__/
 .env
 *.zip
 seed.log
+# The Azure deployment files (and the 150 MB database dump in azure/dump/) are not part of the image.
+azure/

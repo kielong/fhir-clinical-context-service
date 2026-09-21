@@ -15,3 +15,6 @@ data/synthea/
 .DS_Store
 .idea/
 seed.log
+
+# The database dump for the Azure deployment: large, and patient data even if synthetic.
+azure/dump/

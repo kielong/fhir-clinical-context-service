@@ -1,0 +1,18 @@
+#cloud-config
+# ORIGIN: AI — typed by Claude Code, reviewed by Kiel. First-boot setup only: it installs Docker
+#   from Docker's own apt repository (its documented steps for Ubuntu) and makes the folder that
+#   deploy.sh copies into. It does not start the stack; deploy.sh does, after the data is restored.
+package_update: true
+packages:
+  - ca-certificates
+  - curl
+runcmd:
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - usermod -aG docker azureuser
+  - mkdir -p /opt/clinical-context
+  - chown azureuser:azureuser /opt/clinical-context
