@@ -1,3 +1,7 @@
+# ORIGIN: H-spec — Kiel's decision: the summary is capped at MAX_SUMMARY_WORDS words, and that cap
+#   is enforced by the checks, not by the prompt: told a number, gemma3:4b counted words in the
+#   answer ("77 words. 77 words. ...") and looped until the token budget ran out, so busy charts
+#   lost their summary entirely. The prompt asks for brevity in words the model cannot count.
 # ORIGIN: H-spec — Kiel's decision: the model never sees a source, an id, or the patient's name; it
 #   is given plain lines derived from the packet, and gaps go to it in plain words with how many
 #   records were excluded as no longer active. The rules it is told are the exact things it is
@@ -13,15 +17,15 @@ import re
 import unicodedata
 
 from ..packet.models import ClinicalContextPacket
-from .checks import REJECTION_REASONS, Violation
+from .checks import MAX_SUMMARY_WORDS, REJECTION_REASONS, Violation
 
 SYSTEM_PROMPT = """\
-You write a two-sentence scan summary of one patient's chart for a utilization-management reviewer.
+You write a short scan summary of one patient's chart for a utilization-management reviewer.
 
 Use only the facts listed in the user message.
 
 Rules:
-1. Write exactly two plain sentences.
+1. Write a few plain sentences, no more than a short paragraph. Do not pad or repeat.
 2. Never add a diagnosis, medication, or allergy that is not listed.
 3. Never write an identifier, a resource name, or the patient's name.
 4. Never say care should be approved, denied, or authorized, that anything is medically necessary, \
@@ -33,10 +37,10 @@ outcome.
 "A 93-year-old man, now deceased, had ..."), and everything else must be in the past tense. Never \
 describe a deceased patient as currently on treatment.
 8. If a list says none, you may say none is recorded. Never say more than the lists say.
-9. If a list has more items than you can name in two sentences, name only the first few and say \
-"including"; never present a partial list as the whole list.
+9. If a list has more items than you can name, name only the first few and say "including"; \
+never present a partial list as the whole list.
 
-Answer only with JSON of the form {"summary": "<the two sentences>"}."""
+Answer only with JSON of the form {"summary": "<the summary>"}."""
 
 # The trailing "(disorder)" style tags SNOMED puts on display names. Stripped from the prompt only;
 # the packet keeps the exact display. Only these known tags: a meaningful parenthetical such as
@@ -176,5 +180,6 @@ def with_correction(user: str, problem: Violation) -> str:
     temperature 0 would just produce the same answer). The rejected text is not echoed back."""
     return (
         f"{user}\n\nYour previous answer was rejected because {REJECTION_REASONS[problem]}. "
-        'Answer again in two plain sentences using only the listed facts, as {"summary": "..."}.'
+        f"Answer again in at most {MAX_SUMMARY_WORDS} words using only the listed facts, "
+        'as {"summary": "..."}.'
     )

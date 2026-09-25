@@ -5,7 +5,7 @@
 
 Give the service a patient and it returns a **packet**. The packet has three lists from that
 patient's health record: conditions, medications, and allergies. Every item includes the record it
-came from. The packet also says what is missing, and it adds a two-sentence summary a reviewer can
+came from. The packet also says what is missing, and it adds a short summary a reviewer can
 scan.
 
 The lists are built in code, from the record. A small local model (Ollama, `gemma3:4b`, running on
@@ -156,7 +156,7 @@ EHRs do not offer those the same way, so the demo does not depend on them.
 The model must answer with exactly `{"summary": "..."}`. Ollama's structured-output mode is used,
 and the service checks the shape again. The text must also pass these rules:
 
-- Exactly two sentences.
+- At most 200 words.
 - No identifiers.
 - No approve, deny, or "medically necessary" language.
 - No "stable" or "well controlled".

@@ -33,7 +33,7 @@ def get_fhir_client(http: HttpDep, settings: SettingsDep) -> FhirClient:
 
 FhirDep = Annotated[FhirClient, Depends(get_fhir_client)]
 
-# Writes the two-sentence summary for an assembled packet. It may fail, but it never changes the
+# Writes the summary for an assembled packet. It may fail, but it never changes the
 # packet's facts: the route only takes the returned summary.
 Summarizer = Callable[[ClinicalContextPacket], Awaitable[SummaryResult]]
 

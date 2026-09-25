@@ -13,7 +13,10 @@ from enum import StrEnum
 
 from ..packet.models import ClinicalContextPacket
 
-MAX_SUMMARY_CHARS = 400
+# ORIGIN: H-spec — Kiel's decision: a summary is capped by word count, not by sentences or
+#   characters. A reviewer scanning a chart can read a paragraph; what matters is that it stays
+#   short enough to scan and that every other check below still holds. Lines typed by Claude Code.
+MAX_SUMMARY_WORDS = 200
 
 
 class Violation(StrEnum):
@@ -22,7 +25,6 @@ class Violation(StrEnum):
     INVALID_JSON = "invalid_json"
     EMPTY = "empty"
     TOO_LONG = "too_long"
-    TOO_MANY_SENTENCES = "too_many_sentences"
     CONTAINS_IDENTIFIER = "contains_identifier"
     DETERMINATION_LANGUAGE = "determination_language"
     CONTROL_CLAIM = "control_claim"
@@ -36,8 +38,7 @@ class Violation(StrEnum):
 REJECTION_REASONS = {
     Violation.INVALID_JSON: "it was not valid JSON with a single string field named summary",
     Violation.EMPTY: "it was empty",
-    Violation.TOO_LONG: "it was too long",
-    Violation.TOO_MANY_SENTENCES: "it had more than two sentences",
+    Violation.TOO_LONG: f"it was longer than {MAX_SUMMARY_WORDS} words",
     Violation.CONTAINS_IDENTIFIER: "it contained an identifier",
     Violation.DETERMINATION_LANGUAGE: (
         "it used determination language (approve, deny, authorize, medically necessary, eligible)"
@@ -63,7 +64,6 @@ REJECTION_REASONS = {
     ),
 }
 
-_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
 _IDENTIFIER = re.compile(
     r"\b(?:Patient|Condition|MedicationRequest|AllergyIntolerance)/\S+"
     r"|\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
@@ -86,10 +86,8 @@ def validate_summary(text: str) -> Violation | None:
     text = text.strip()
     if not text:
         return Violation.EMPTY
-    if len(text) > MAX_SUMMARY_CHARS:
+    if len(text.split()) > MAX_SUMMARY_WORDS:
         return Violation.TOO_LONG
-    if len(_SENTENCE_BREAK.split(text)) > 2:
-        return Violation.TOO_MANY_SENTENCES
     if _IDENTIFIER.search(text):
         return Violation.CONTAINS_IDENTIFIER
     if _DETERMINATION.search(text):

@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     )
     summary_deadline_seconds: float = 45  # how long a request waits for a summary, queue included
     ollama_num_ctx: int = 4096
-    ollama_num_predict: int = 160
+    ollama_num_predict: int = 400
     ollama_keep_alive: str = "30m"
     ollama_warmup: bool = True
     summary_cache_size: int = 256  # finished summaries remembered in memory; 0 turns it off

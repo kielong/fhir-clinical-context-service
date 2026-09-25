@@ -2,10 +2,10 @@
 #   says what was wrong (a temperature-0 retry of the same prompt would just repeat itself); no
 #   retry on a timeout; any failure leaves the facts untouched and reports why. Lines typed by
 #   Claude Code. Edge cases nobody specified are labeled AI where they occur.
-"""The only place a model is used: it writes a two-sentence summary of an assembled packet.
+"""The only place a model is used: it writes a short prose summary of an assembled packet.
 
 The model is a writer at the end of a deterministic pipeline. It may return exactly one thing,
-{"summary": "<two sentences>"}, and everything it writes is checked; anything that fails a check is
+{"summary": "<the summary>"}, and everything it writes is checked; anything that fails a check is
 thrown away and the packet is returned with the summary marked unavailable. The facts, the sources
 and the gaps never depend on the model.
 

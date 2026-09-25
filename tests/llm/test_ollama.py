@@ -16,7 +16,7 @@ async def test_the_request_asks_for_greedy_decoding_a_fixed_seed_and_only_a_summ
     route = ollama.post(CHAT).respond(200, json=reply())
     packet = real_packet("Aaron697_Brekke496")
 
-    await run(packet, ollama_num_ctx=4096, ollama_num_predict=160, ollama_keep_alive="30m")
+    await run(packet, ollama_num_ctx=4096, ollama_num_predict=400, ollama_keep_alive="30m")
 
     body = sent(route)
     system, user = build_prompt(packet)
@@ -34,7 +34,7 @@ async def test_the_request_asks_for_greedy_decoding_a_fixed_seed_and_only_a_summ
         "top_k": 1,
         "seed": 0,
         "num_ctx": 4096,
-        "num_predict": 160,
+        "num_predict": 400,
     }
     assert body["keep_alive"] == "30m"
     # Structured output: the model can only produce {"summary": <string>}, nothing else.

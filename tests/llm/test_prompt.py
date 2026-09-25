@@ -10,7 +10,7 @@ from packets import busy_synthetic_packet, packet_from, real_packet
 
 def test_the_system_prompt_forbids_invention_ids_determinations_and_control_claims():
     rules = SYSTEM_PROMPT
-    assert "exactly two plain sentences" in rules
+    assert "a few plain sentences" in rules  # brevity, asked for without a number to count
     assert "not listed" in rules  # never add a fact
     assert "identifier" in rules and "patient's name" in rules
     assert "approved, denied, or authorized" in rules
@@ -19,6 +19,15 @@ def test_the_system_prompt_forbids_invention_ids_determinations_and_control_clai
     assert 'Write "recorded as active", never "currently has"' in rules
     assert "deceased" in rules
     assert '{"summary"' in rules  # the only thing it may answer with
+
+
+def test_the_system_prompt_never_gives_the_model_a_word_count_to_count():
+    # Found live on a 24-condition chart: told "at most 200 words", gemma3:4b started counting in
+    # the answer ("77 words. 77 words. ...") and, under greedy decoding, looped until it hit the
+    # token ceiling, so the JSON was cut off and every busy chart lost its summary. The limit is
+    # enforced by the checks instead; the prompt only asks for brevity.
+    assert "200" not in SYSTEM_PROMPT
+    assert "words" not in SYSTEM_PROMPT
 
 
 def test_the_system_prompt_makes_the_model_say_a_deceased_patient_is_deceased_up_front():

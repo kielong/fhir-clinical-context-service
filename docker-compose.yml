@@ -8,6 +8,8 @@ services:
   postgres:
     image: postgres:16.15
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-hapi}
       POSTGRES_USER: ${POSTGRES_USER:-hapi}

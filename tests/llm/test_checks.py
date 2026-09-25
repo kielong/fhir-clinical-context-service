@@ -5,6 +5,7 @@ import pytest
 
 import synthetic as syn
 from clinical_context.llm.checks import (
+    MAX_SUMMARY_WORDS,
     REJECTION_REASONS,
     Violation,
     check_summary,
@@ -25,8 +26,9 @@ from packets import packet_from, real_packet
         ("One short sentence.", None),
         ("", "empty"),
         ("   ", "empty"),
-        ("x" * 401, "too_long"),
-        ("First sentence. Second sentence. Third sentence.", "too_many_sentences"),
+        ("word " * (MAX_SUMMARY_WORDS + 1), "too_long"),
+        ("word " * MAX_SUMMARY_WORDS, None),  # the limit itself is allowed
+        ("First sentence. Second sentence. Third sentence.", None),  # sentences are not counted
         ("See Condition/123 for details.", "contains_identifier"),
         ("Recorded under MedicationRequest/abc.", "contains_identifier"),
         ("Patient 2fa15bc7-8866-461a-9000-f739e425860a is recorded.", "contains_identifier"),
@@ -50,10 +52,19 @@ def test_validate_summary_table(text, expected):
     assert validate_summary(text) == expected
 
 
-def test_decimals_and_abbreviations_do_not_count_as_extra_sentences():
-    text = "Recorded active on metformin 0.5 g daily, with hypertension. No allergies are recorded."
+def test_a_summary_is_measured_in_words_not_characters_or_sentences():
+    # Long in characters and in sentences, but well under the word limit: it may be shown.
+    text = " ".join(
+        ["Recorded active on metformin, with hypertension and chronic kidney disease."] * 8
+    )
 
+    assert len(text) > 400
+    assert len(text.split()) < MAX_SUMMARY_WORDS
     assert validate_summary(text) is None
+
+
+def test_the_word_limit_is_two_hundred_words():
+    assert MAX_SUMMARY_WORDS == 200
 
 
 def test_words_that_only_contain_a_forbidden_stem_inside_another_word_are_allowed():
